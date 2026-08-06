@@ -3,7 +3,7 @@
   "use strict";
 
   var DB_NAME = "comissionado";
-  var DB_VERSION = 1;
+  var DB_VERSION = 2;
   var STORE = "fretes";
   var db = null;
   var firestore = null;
@@ -21,6 +21,7 @@
           var store = database.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
           store.createIndex("data", "data");
           store.createIndex("status", "status");
+          store.createIndex("remoteId", "remoteId", { unique: false });
         }
       };
       req.onsuccess = function () { resolve(req.result); };
@@ -67,16 +68,19 @@
     if (!firestore || !isOnline()) return;
     try {
       var snapshot = await firestore.collection("fretes").get();
-      var remote = snapshot.docs.map(function (doc) {
+      var remote = await Promise.all(snapshot.docs.map(async function (doc) {
         var data = doc.data();
-        data.id = doc.id;
         data.remoteId = doc.id;
+        var existing = await getByRemoteId(data.remoteId);
+        if (existing) {
+          data.id = existing.id;
+          data.dataCriacao = data.dataCriacao || existing.dataCriacao || new Date().toISOString();
+        }
+        var key = await put(data);
+        data.id = key;
         return data;
-      });
-      cache = remote;
-      await Promise.all(remote.map(function (f) {
-        return put(f);
       }));
+      cache = remote;
       render();
     } catch (err) {
       console.warn("syncWithFirestore failed", err);
@@ -108,6 +112,14 @@
     return new Promise(function (resolve, reject) {
       var req = tx("readonly").getAll();
       req.onsuccess = function () { resolve(req.result || []); };
+      req.onerror = function () { reject(req.error); };
+    });
+  }
+
+  function getByRemoteId(remoteId) {
+    return new Promise(function (resolve, reject) {
+      var req = tx("readonly").index("remoteId").get(remoteId);
+      req.onsuccess = function () { resolve(req.result || null); };
       req.onerror = function () { reject(req.error); };
     });
   }
@@ -299,12 +311,12 @@
     };
     if (id) {
       var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
-      registro.id = Number(id);
+      registro.id = isNaN(Number(id)) ? id : Number(id);
       registro.dataCriacao = (antigo && antigo.dataCriacao) || agora;
       registro.remoteId = antigo && antigo.remoteId;
     }
     var key = await put(registro);
-    registro.id = Number(key);
+    registro.id = key;
     await saveRemote(registro);
     fecharSheet();
     await recarregar();
@@ -312,7 +324,7 @@
   }
 
   async function excluir() {
-    var id = Number($("id").value);
+    var id = $("id").value;
     if (!id) return;
     if (!confirm("Excluir este frete definitivamente?")) return;
     await remove(id);
