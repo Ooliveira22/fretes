@@ -26,6 +26,80 @@
     });
   }
 
+  function firebaseInit() {
+    if (!window.firebaseConfig || !window.firebase) return null;
+    try {
+      firebase.initializeApp(window.firebaseConfig);
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      var db = firebase.firestore();
+      db.enablePersistence().catch(function () {
+        // Persistência offline não disponível
+      });
+      return db;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function firebaseAnonymousAuth() {
+    if (!window.firebase || !firebase.auth) return null;
+    try {
+      var auth = firebase.auth();
+      var user = auth.currentUser;
+      if (!user) {
+        var result = await auth.signInAnonymously();
+        user = result.user;
+      }
+      return user;
+    } catch (err) {
+      console.warn("firebaseAnonymousAuth failed", err);
+      return null;
+    }
+  }
+
+  function isOnline() {
+    return navigator.onLine;
+  }
+
+  async function syncWithFirestore() {
+    if (!firestore || !userId || !isOnline()) return;
+    try {
+      var snapshot = await firestore.collection("fretes").where("userId", "==", userId).get();
+      var remote = snapshot.docs.map(function (doc) {
+        var data = doc.data();
+        data.id = doc.id;
+        data.remoteId = doc.id;
+        return data;
+      });
+      cache = remote;
+      await Promise.all(remote.map(function (f) {
+        return put(f);
+      }));
+      render();
+    } catch (err) {
+      console.warn("syncWithFirestore failed", err);
+    }
+  }
+
+  async function saveRemote(frete) {
+    if (!firestore || !userId || !isOnline()) return;
+    try {
+      var remoteId = frete.remoteId;
+      var data = Object.assign({}, frete, { userId: userId });
+      delete data.id;
+      delete data.remoteId;
+      if (remoteId) {
+        await firestore.collection("fretes").doc(remoteId).set(data);
+      } else {
+        var doc = await firestore.collection("fretes").add(data);
+        frete.remoteId = doc.id;
+        put(frete);
+      }
+    } catch (err) {
+      console.warn("saveRemote failed", err);
+    }
+  }
+
   function tx(mode) { return db.transaction(STORE, mode).objectStore(STORE); }
 
   function getAll() {
@@ -225,8 +299,11 @@
       var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
       registro.id = Number(id);
       registro.dataCriacao = (antigo && antigo.dataCriacao) || agora;
+      registro.remoteId = antigo && antigo.remoteId;
     }
-    await put(registro);
+    var key = await put(registro);
+    registro.id = Number(key);
+    await saveRemote(registro);
     fecharSheet();
     await recarregar();
     toast(id ? "Frete atualizado." : "Frete cadastrado.");
@@ -328,7 +405,13 @@
 
     try {
       db = await openDB();
+      firestore = firebaseInit();
+      await firebaseAnonymousAuth();
+      var authUser = firebase.auth().currentUser;
+      userId = authUser ? authUser.uid : null;
       await recarregar();
+      await syncWithFirestore();
+      window.addEventListener("online", syncWithFirestore);
     } catch (err) {
       toast("Falha ao abrir o banco local.");
     }
