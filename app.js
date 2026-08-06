@@ -350,7 +350,24 @@
       return;
     }
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("service-worker.js", { scope: "./" }).catch(function () {});
+      navigator.serviceWorker
+        .register("service-worker.js?v=3", { scope: "./" })
+        .then(function (registration) {
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          }
+          if (registration.installing) {
+            registration.installing.addEventListener("statechange", function () {
+              if (registration.installing.state === "installed" && navigator.serviceWorker.controller) {
+                registration.installing.postMessage({ type: "SKIP_WAITING" });
+              }
+            });
+          }
+          if (navigator.serviceWorker.controller) {
+            registration.update();
+          }
+        })
+        .catch(function () {});
     });
   }
 
