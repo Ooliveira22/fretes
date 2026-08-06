@@ -6,6 +6,8 @@
   var DB_VERSION = 1;
   var STORE = "fretes";
   var db = null;
+  var firestore = null;
+  var userId = null;
   var ordemDesc = true;
   var cache = [];
 
@@ -62,9 +64,9 @@
   }
 
   async function syncWithFirestore() {
-    if (!firestore || !userId || !isOnline()) return;
+    if (!firestore || !isOnline()) return;
     try {
-      var snapshot = await firestore.collection("fretes").where("userId", "==", userId).get();
+      var snapshot = await firestore.collection("fretes").get();
       var remote = snapshot.docs.map(function (doc) {
         var data = doc.data();
         data.id = doc.id;
@@ -82,10 +84,10 @@
   }
 
   async function saveRemote(frete) {
-    if (!firestore || !userId || !isOnline()) return;
+    if (!firestore || !isOnline()) return;
     try {
       var remoteId = frete.remoteId;
-      var data = Object.assign({}, frete, { userId: userId });
+      var data = Object.assign({}, frete, {});
       delete data.id;
       delete data.remoteId;
       if (remoteId) {
@@ -407,8 +409,6 @@
       db = await openDB();
       firestore = firebaseInit();
       await firebaseAnonymousAuth();
-      var authUser = firebase.auth().currentUser;
-      userId = authUser ? authUser.uid : null;
       await recarregar();
       await syncWithFirestore();
       window.addEventListener("online", syncWithFirestore);
