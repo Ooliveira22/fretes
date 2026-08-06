@@ -1,10 +1,11 @@
-const CACHE = "comissionado-v1";
+const CACHE = "comissionado-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
   "./manifest.json",
+  "./firebase-config.js",
   "./assets/fonts/fonts.css",
   "./assets/logo/logo.png",
   "./assets/icons/icon-192.png",
@@ -30,28 +31,15 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
 
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => caches.match("./index.html")),
-    );
-    return;
-  }
-
   event.respondWith(
-    caches.match(request).then(
-      (cached) =>
-        cached ||
-        fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200) {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copy));
-          return response;
-        }),
-    ),
+        }
+        return response;
+      })
+      .catch(() => caches.match(request).then((cached) => cached || caches.match("./index.html"))),
   );
 });
