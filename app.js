@@ -13,6 +13,13 @@
   var ordemDesc = true;
   var cache = [];
 
+  function numero(valor) {
+    if (typeof valor === "number") return valor;
+    var texto = String(valor == null ? "" : valor).trim();
+    if (texto.indexOf("R$") !== -1) texto = texto.replace(/[^0-9,.-]/g, "").replace(/\./g, "").replace(",", ".");
+    return Number(texto) || 0;
+  }
+
   /* ---------- IndexedDB ---------- */
   function openDB() {
     return new Promise(function (resolve, reject) {
@@ -157,7 +164,7 @@
   function totais(itens) {
     var pend = 0, rec = 0, qp = 0, qr = 0;
     itens.forEach(function (f) {
-      var v = Number(f.valorComissao) || 0;
+      var v = numero(f.valorComissao);
       if (f.status === "Recebido") { rec += v; qr++; } else { pend += v; qp++; }
     });
     $("valorPendente").textContent = brl(pend);
@@ -202,7 +209,7 @@
         '<div class="item-route">' + esc(f.origem) + " → " + esc(f.destino) + "</div>" +
         '<div class="item-bottom">' +
           '<span class="item-date">' + (f.cliente ? esc(f.cliente) : "Sem cliente") + "</span>" +
-          '<span class="item-value">' + brl(f.valorComissao) + "</span>" +
+          '<span class="item-value">' + brl(numero(f.valorComissao)) + "</span>" +
         "</div>";
       li.addEventListener("click", function () { abrir(f); });
       lista.appendChild(li);
@@ -320,7 +327,7 @@
       origem: $("origem").value.trim(),
       destino: $("destino").value.trim(),
       cliente: $("cliente").value.trim(),
-      valorFrete: Number($("valorFrete").value) || 0,
+      valorFrete: numero($("valorFrete").value),
       valorComissao: statusAtual === "Parcial" ? saldoPendente : valorComissao,
       status: statusAtual === "Parcial" ? "A Receber" : statusAtual,
       observacoes: $("observacoes").value.trim(),
