@@ -84,6 +84,7 @@
       render();
     } catch (err) {
       console.warn("syncWithFirestore failed", err);
+      await recarregar();
     }
   }
 
@@ -235,6 +236,7 @@
     Array.prototype.forEach.call(document.querySelectorAll(".seg"), function (b) {
       b.classList.toggle("active", b.dataset.status === valor);
     });
+    $("parcialGroup").classList.toggle("hidden", valor !== "Parcial");
   }
 
   function abrirSheet() {
@@ -253,6 +255,8 @@
     $("id").value = "";
     $("data").value = hoje();
     $("valorComissao").dataset.manual = "";
+    $("valorRecebidoParcial").value = "";
+    $("parcialBtn").classList.add("hidden");
     setStatus("A Receber");
     $("btnExcluir").classList.add("hidden");
     abrirSheet();
@@ -282,7 +286,9 @@
     $("valorFrete").value = f.valorFrete != null ? f.valorFrete : "";
     $("valorComissao").value = f.valorComissao != null ? f.valorComissao : "";
     $("valorComissao").dataset.manual = comissaoManual(f) ? "true" : "";
+    $("valorRecebidoParcial").value = "";
     $("observacoes").value = f.observacoes || "";
+    $("parcialBtn").classList.remove("hidden");
     setStatus(f.status === "Recebido" ? "Recebido" : "A Receber");
     $("btnExcluir").classList.remove("hidden");
     abrirSheet();
@@ -297,14 +303,20 @@
     }
     var agora = new Date().toISOString();
     var id = $("id").value;
+    var valorComissao = Number($("valorComissao").value) || 0;
+    var valorRecebido = Number($("valorRecebidoParcial").value) || 0;
+    if (statusAtual === "Parcial" && (!id || valorRecebido <= 0 || valorRecebido >= valorComissao)) {
+      toast(id ? "Informe um valor menor que a comissão total." : "O recebimento parcial só está disponível na edição.");
+      return;
+    }
     var registro = {
       data: $("data").value,
       origem: $("origem").value.trim(),
       destino: $("destino").value.trim(),
       cliente: $("cliente").value.trim(),
       valorFrete: Number($("valorFrete").value) || 0,
-      valorComissao: Number($("valorComissao").value) || 0,
-      status: statusAtual,
+      valorComissao: valorComissao,
+      status: statusAtual === "Parcial" ? "A Receber" : statusAtual,
       observacoes: $("observacoes").value.trim(),
       dataCriacao: agora,
       ultimaAlteracao: agora,
@@ -318,8 +330,27 @@
     var key = await put(registro);
     registro.id = key;
     await saveRemote(registro);
+    if (statusAtual === "Parcial") {
+      var recebido = Object.assign({}, registro, {
+        id: undefined,
+        remoteId: undefined,
+        valorComissao: valorRecebido,
+        status: "Recebido",
+        observacoes: registro.observacoes ? registro.observacoes + " (Recebimento parcial)" : "Recebimento parcial",
+        dataCriacao: agora,
+        ultimaAlteracao: agora,
+      });
+      delete recebido.id;
+      delete recebido.remoteId;
+      recebido.id = await put(recebido);
+      await saveRemote(recebido);
+    }
     fecharSheet();
-    await recarregar();
+    if (firestore && isOnline()) {
+      await syncWithFirestore();
+    } else {
+      await recarregar();
+    }
     toast(id ? "Frete atualizado." : "Frete cadastrado.");
   }
 
@@ -329,7 +360,11 @@
     if (!confirm("Excluir este frete definitivamente?")) return;
     await remove(id);
     fecharSheet();
-    await recarregar();
+    if (firestore && isOnline()) {
+      await syncWithFirestore();
+    } else {
+      await recarregar();
+    }
     toast("Frete excluído.");
   }
 
@@ -438,8 +473,11 @@
       db = await openDB();
       firestore = firebaseInit();
       await firebaseAnonymousAuth();
-      await recarregar();
-      await syncWithFirestore();
+      if (firestore && isOnline()) {
+        await syncWithFirestore();
+      } else {
+        await recarregar();
+      }
       window.addEventListener("online", syncWithFirestore);
     } catch (err) {
       toast("Falha ao abrir o banco local.");

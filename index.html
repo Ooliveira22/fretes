@@ -85,7 +85,9 @@
         <div class="segmented" role="radiogroup" aria-label="Status">
           <button type="button" class="seg active" data-status="A Receber">A Receber</button>
           <button type="button" class="seg" data-status="Recebido">Recebido</button>
+          <button type="button" class="seg hidden" id="parcialBtn" data-status="Parcial">Recebimento parcial</button>
         </div>
+        <label id="parcialGroup" class="hidden">Valor recebido<input type="number" id="valorRecebidoParcial" step="0.01" min="0" placeholder="0,00" /></label>
         <label>Observações<textarea id="observacoes" rows="3" placeholder="Anotações..."></textarea></label>
         <div class="actions">
           <button type="submit" class="btn btn-primary"><i class="mi">save</i> Salvar</button>

@@ -221,7 +221,7 @@ html, body {
 .form input:focus, .form textarea:focus { border-color: var(--secondary); }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-.segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--card-2); border-radius: 14px; padding: 5px; }
+.segmented { display: grid; grid-template-columns: 0.9fr 0.9fr 1.5fr; gap: 6px; background: var(--card-2); border-radius: 14px; padding: 5px; }
 .seg {
   border: 0;
   background: transparent;
@@ -229,7 +229,7 @@ html, body {
   padding: 11px;
   border-radius: 10px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
