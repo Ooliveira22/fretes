@@ -45,6 +45,7 @@
       <header class="appbar">
         <img src="assets/logo/logo.png" alt="" class="appbar-logo" width="32" height="32" />
         <h1>COMISSIONADO</h1>
+        <button id="btnAdmin" class="icon-btn logout-btn" title="Acesso do administrador"><i class="mi">lock</i></button>
         <button id="btnSair" class="icon-btn logout-btn" title="Sair"><i class="mi">logout</i></button>
       </header>
 
@@ -62,7 +63,7 @@
           </article>
         </section>
 
-        <button class="btn btn-primary btn-block" id="btnNovo">
+        <button class="btn btn-primary btn-block admin-only" id="btnNovo">
           <i class="mi">add</i> NOVO FRETE
         </button>
 
@@ -104,9 +105,9 @@
         <label id="parcialGroup" class="hidden">Valor recebido<input type="number" id="valorRecebidoParcial" step="0.01" min="0" placeholder="0,00" /></label>
         <label>Observações<textarea id="observacoes" rows="3" placeholder="Anotações..."></textarea></label>
         <div class="actions">
-          <button type="submit" class="btn btn-primary"><i class="mi">save</i> Salvar</button>
+          <button type="submit" class="btn btn-primary admin-only"><i class="mi">save</i> Salvar</button>
           <button type="button" class="btn btn-ghost" id="btnCancelar">Cancelar</button>
-          <button type="button" class="btn btn-danger hidden" id="btnExcluir"><i class="mi">delete</i> Excluir</button>
+          <button type="button" class="btn btn-danger hidden admin-only" id="btnExcluir"><i class="mi">delete</i> Excluir</button>
         </div>
       </form>
     </section>

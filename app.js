@@ -8,6 +8,8 @@
   var db = null;
   var firestore = null;
   var userId = null;
+  var isAdmin = false;
+  var OWNER_EMAIL = "oliveira.simplicio22@gmail.com";
   var ordemDesc = true;
   var cache = [];
 
@@ -51,10 +53,9 @@
   async function syncWithFirestore() {
     if (!firestore || !isOnline()) return;
     try {
-      var snapshot = await firestore.collection("fretes").where("ownerId", "==", userId).get();
+      var snapshot = await firestore.collection("fretes").get();
       var remote = await Promise.all(snapshot.docs.map(async function (doc) {
         var data = doc.data();
-        if (data.ownerId !== userId) return null;
         data.remoteId = doc.id;
         var existing = await getByRemoteId(data.remoteId);
         if (existing) {
@@ -210,7 +211,7 @@
   }
 
   async function recarregar() {
-    cache = (await getAll()).filter(function (frete) { return !userId || frete.ownerId === userId; });
+    cache = await getAll();
     render();
   }
 
@@ -225,6 +226,15 @@
     $("parcialGroup").classList.toggle("hidden", valor !== "Parcial");
   }
 
+  function aplicarPermissoes() {
+    Array.prototype.forEach.call(document.querySelectorAll(".admin-only"), function (el) {
+      el.classList.toggle("hidden", !isAdmin);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#form input, #form textarea, #form .seg"), function (el) {
+      el.disabled = !isAdmin;
+    });
+  }
+
   function abrirSheet() {
     $("backdrop").classList.remove("hidden");
     $("sheet").classList.remove("hidden");
@@ -236,6 +246,7 @@
   }
 
   function novo() {
+    if (!isAdmin) return toast("Apenas o administrador pode alterar fretes.");
     $("sheetTitle").textContent = "Novo Frete";
     $("form").reset();
     $("id").value = "";
@@ -277,12 +288,15 @@
     $("parcialBtn").classList.remove("hidden");
     setStatus(f.status === "Recebido" ? "Recebido" : "A Receber");
     $("btnExcluir").classList.remove("hidden");
+    $("btnExcluir").classList.toggle("hidden", !isAdmin);
+    aplicarPermissoes();
     abrirSheet();
   }
 
 
   async function salvar(e) {
     e.preventDefault();
+    if (!isAdmin) return toast("Apenas o administrador pode alterar fretes.");
     if (!$("data").value || !$("origem").value.trim() || !$("destino").value.trim()) {
       toast("Preencha data, origem e destino.");
       return;
@@ -342,6 +356,7 @@
   }
 
   async function excluir() {
+    if (!isAdmin) return toast("Apenas o administrador pode alterar fretes.");
     var id = $("id").value;
     if (!id) return;
     if (!confirm("Excluir este frete definitivamente?")) return;
@@ -437,7 +452,14 @@
       var result = criar
         ? await auth.createUserWithEmailAndPassword(email, senha)
         : await auth.signInWithEmailAndPassword(email, senha);
+      if (criar || result.user.email !== OWNER_EMAIL) {
+        await firebase.auth().signOut();
+        toast("Somente o administrador pode entrar como editor.");
+        return;
+      }
       userId = result.user.uid;
+      isAdmin = true;
+      aplicarPermissoes();
       $("login").classList.add("hidden");
       $("app").classList.remove("hidden");
       await recarregar();
@@ -452,14 +474,16 @@
     registrarSW();
 
     $("btnNovo").addEventListener("click", novo);
+    $("btnAdmin").addEventListener("click", function () {
+      $("login").classList.remove("hidden");
+      $("app").classList.add("hidden");
+    });
     $("btnSair").addEventListener("click", function () { firebase.auth().signOut(); });
     $("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
       entrar($("loginEmail").value.trim(), $("loginPassword").value, false);
     });
-    $("btnCriarConta").addEventListener("click", function () {
-      entrar($("loginEmail").value.trim(), $("loginPassword").value, true);
-    });
+    $("btnCriarConta").classList.add("hidden");
     $("btnInstall").addEventListener("click", installApp);
     window.addEventListener("beforeinstallprompt", showInstallButton);
     window.addEventListener("appinstalled", function () {
@@ -491,12 +515,25 @@
       if (!firestore) throw new Error("Firebase indisponível");
       firebase.auth().onAuthStateChanged(async function (user) {
         if (!user) {
-          mostrarLogin();
+          var result = await firebase.auth().signInAnonymously();
+          user = result.user;
+        }
+        if (user.isAnonymous) {
+          userId = user.uid;
+          isAdmin = false;
+        } else if (user.email === OWNER_EMAIL) {
+          userId = user.uid;
+          isAdmin = true;
+        } else {
+          await firebase.auth().signOut();
           return;
         }
-        userId = user.uid;
         $("login").classList.add("hidden");
         $("app").classList.remove("hidden");
+        $("btnNovo").classList.toggle("hidden", !isAdmin);
+        $("btnAdmin").classList.toggle("hidden", isAdmin);
+        $("btnSair").classList.toggle("hidden", !isAdmin);
+        aplicarPermissoes();
         await recarregar();
         await syncWithFirestore();
       });
