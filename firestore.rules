@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /fretes/{freteId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create, update, delete: if request.auth != null
         && request.auth.token.email == 'oliveira.simplicio22@gmail.com';
     }

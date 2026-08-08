@@ -512,15 +512,22 @@
       if (!firestore) throw new Error("Firebase indisponível");
       firebase.auth().onAuthStateChanged(async function (user) {
         if (!user) {
-          var result = await firebase.auth().signInAnonymously();
-          user = result.user;
+          try {
+            var result = await firebase.auth().signInAnonymously();
+            user = result.user;
+          } catch (err) {
+            console.warn("Anonymous access unavailable", err);
+          }
         }
-        if (user.isAnonymous) {
+        if (user && user.isAnonymous) {
           userId = user.uid;
           isAdmin = false;
-        } else if (user.email === OWNER_EMAIL) {
+        } else if (user && user.email === OWNER_EMAIL) {
           userId = user.uid;
           isAdmin = true;
+        } else if (!user) {
+          userId = null;
+          isAdmin = false;
         } else {
           await firebase.auth().signOut();
           return;
