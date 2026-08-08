@@ -400,7 +400,7 @@
     }
     window.addEventListener("load", function () {
       navigator.serviceWorker
-        .register("service-worker.js?v=3", { scope: "./" })
+        .register("service-worker.js?v=4", { scope: "./" })
         .then(function (registration) {
           if (registration.waiting) {
             registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -443,7 +443,6 @@
 
   function mostrarLogin() {
     $("login").classList.remove("hidden");
-    $("app").classList.add("hidden");
   }
 
   async function entrar(email, senha, criar) {
@@ -461,7 +460,6 @@
       isAdmin = true;
       aplicarPermissoes();
       $("login").classList.add("hidden");
-      $("app").classList.remove("hidden");
       await recarregar();
       await syncWithFirestore();
     } catch (err) {
@@ -475,15 +473,14 @@
 
     $("btnNovo").addEventListener("click", novo);
     $("btnAdmin").addEventListener("click", function () {
-      $("login").classList.remove("hidden");
-      $("app").classList.add("hidden");
+      mostrarLogin();
     });
     $("btnSair").addEventListener("click", function () { firebase.auth().signOut(); });
+    $("btnFecharLogin").addEventListener("click", function () { $("login").classList.add("hidden"); });
     $("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
       entrar($("loginEmail").value.trim(), $("loginPassword").value, false);
     });
-    $("btnCriarConta").classList.add("hidden");
     $("btnInstall").addEventListener("click", installApp);
     window.addEventListener("beforeinstallprompt", showInstallButton);
     window.addEventListener("appinstalled", function () {
@@ -529,7 +526,6 @@
           return;
         }
         $("login").classList.add("hidden");
-        $("app").classList.remove("hidden");
         $("btnNovo").classList.toggle("hidden", !isAdmin);
         $("btnAdmin").classList.toggle("hidden", isAdmin);
         $("btnSair").classList.toggle("hidden", !isAdmin);
@@ -539,7 +535,9 @@
       });
       window.addEventListener("online", syncWithFirestore);
     } catch (err) {
-      mostrarLogin();
+      $("app").classList.remove("hidden");
+      splash();
+      recarregar();
       toast("Falha ao abrir o banco local.");
     }
   });

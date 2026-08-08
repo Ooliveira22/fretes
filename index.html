@@ -36,7 +36,7 @@
         <input id="loginEmail" type="email" placeholder="E-mail" autocomplete="email" required />
         <input id="loginPassword" type="password" placeholder="Senha" autocomplete="current-password" required />
         <button type="submit" class="btn btn-primary btn-block">Entrar</button>
-        <button type="button" class="btn btn-ghost btn-block" id="btnCriarConta">Criar acesso</button>
+        <button type="button" class="btn btn-ghost btn-block" id="btnFecharLogin">Cancelar</button>
       </form>
     </section>
 
@@ -45,8 +45,8 @@
       <header class="appbar">
         <img src="assets/logo/logo.png" alt="" class="appbar-logo" width="32" height="32" />
         <h1>COMISSIONADO</h1>
-        <button id="btnAdmin" class="icon-btn logout-btn" title="Acesso do administrador"><i class="mi">lock</i></button>
-        <button id="btnSair" class="icon-btn logout-btn" title="Sair"><i class="mi">logout</i></button>
+        <button id="btnAdmin" class="btn btn-login" title="Acesso do administrador"><i class="mi">lock</i> ENTRAR</button>
+        <button id="btnSair" class="btn btn-login hidden" title="Sair"><i class="mi">logout</i> SAIR</button>
       </header>
 
       <main class="content">
@@ -113,6 +113,6 @@
     </section>
 
     <div id="toast" class="toast"></div>
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
   </body>
 </html>
