@@ -44,22 +44,6 @@
     }
   }
 
-  async function firebaseAnonymousAuth() {
-    if (!window.firebase || !firebase.auth) return null;
-    try {
-      var auth = firebase.auth();
-      var user = auth.currentUser;
-      if (!user) {
-        var result = await auth.signInAnonymously();
-        user = result.user;
-      }
-      return user;
-    } catch (err) {
-      console.warn("firebaseAnonymousAuth failed", err);
-      return null;
-    }
-  }
-
   function isOnline() {
     return navigator.onLine;
   }
@@ -67,9 +51,10 @@
   async function syncWithFirestore() {
     if (!firestore || !isOnline()) return;
     try {
-      var snapshot = await firestore.collection("fretes").get();
+      var snapshot = await firestore.collection("fretes").where("ownerId", "==", userId).get();
       var remote = await Promise.all(snapshot.docs.map(async function (doc) {
         var data = doc.data();
+        if (data.ownerId !== userId) return null;
         data.remoteId = doc.id;
         var existing = await getByRemoteId(data.remoteId);
         if (existing) {
@@ -80,7 +65,7 @@
         data.id = key;
         return data;
       }));
-      cache = remote;
+      cache = remote.filter(Boolean);
       render();
     } catch (err) {
       console.warn("syncWithFirestore failed", err);
@@ -95,6 +80,7 @@
       var data = Object.assign({}, frete, {});
       delete data.id;
       delete data.remoteId;
+      data.ownerId = userId;
       if (remoteId) {
         await firestore.collection("fretes").doc(remoteId).set(data);
       } else {
@@ -224,7 +210,7 @@
   }
 
   async function recarregar() {
-    cache = await getAll();
+    cache = (await getAll()).filter(function (frete) { return !userId || frete.ownerId === userId; });
     render();
   }
 
@@ -320,6 +306,7 @@
       observacoes: $("observacoes").value.trim(),
       dataCriacao: agora,
       ultimaAlteracao: agora,
+      ownerId: userId,
     };
     if (id) {
       var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
@@ -439,11 +426,40 @@
     }
   }
 
+  function mostrarLogin() {
+    $("login").classList.remove("hidden");
+    $("app").classList.add("hidden");
+  }
+
+  async function entrar(email, senha, criar) {
+    try {
+      var auth = firebase.auth();
+      var result = criar
+        ? await auth.createUserWithEmailAndPassword(email, senha)
+        : await auth.signInWithEmailAndPassword(email, senha);
+      userId = result.user.uid;
+      $("login").classList.add("hidden");
+      $("app").classList.remove("hidden");
+      await recarregar();
+      await syncWithFirestore();
+    } catch (err) {
+      toast(err.code === "auth/invalid-credential" ? "E-mail ou senha inválidos." : "Não foi possível entrar.");
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", async function () {
     splash();
     registrarSW();
 
     $("btnNovo").addEventListener("click", novo);
+    $("btnSair").addEventListener("click", function () { firebase.auth().signOut(); });
+    $("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      entrar($("loginEmail").value.trim(), $("loginPassword").value, false);
+    });
+    $("btnCriarConta").addEventListener("click", function () {
+      entrar($("loginEmail").value.trim(), $("loginPassword").value, true);
+    });
     $("btnInstall").addEventListener("click", installApp);
     window.addEventListener("beforeinstallprompt", showInstallButton);
     window.addEventListener("appinstalled", function () {
@@ -472,14 +488,21 @@
     try {
       db = await openDB();
       firestore = firebaseInit();
-      await firebaseAnonymousAuth();
-      if (firestore && isOnline()) {
-        await syncWithFirestore();
-      } else {
+      if (!firestore) throw new Error("Firebase indisponível");
+      firebase.auth().onAuthStateChanged(async function (user) {
+        if (!user) {
+          mostrarLogin();
+          return;
+        }
+        userId = user.uid;
+        $("login").classList.add("hidden");
+        $("app").classList.remove("hidden");
         await recarregar();
-      }
+        await syncWithFirestore();
+      });
       window.addEventListener("online", syncWithFirestore);
     } catch (err) {
+      mostrarLogin();
       toast("Falha ao abrir o banco local.");
     }
   });

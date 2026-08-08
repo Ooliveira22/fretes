@@ -27,11 +27,25 @@
       <span class="splash-version">Versão 0.1</span>
     </div>
 
+    <!-- LOGIN -->
+    <section id="login" class="login hidden">
+      <img class="splash-logo" src="assets/logo/logo.png" alt="Logo COMISSIONADO" width="96" height="96" />
+      <h1>COMISSIONADO</h1>
+      <p>Acesso privado aos seus fretes</p>
+      <form id="loginForm" class="login-form" novalidate>
+        <input id="loginEmail" type="email" placeholder="E-mail" autocomplete="email" required />
+        <input id="loginPassword" type="password" placeholder="Senha" autocomplete="current-password" required />
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        <button type="button" class="btn btn-ghost btn-block" id="btnCriarConta">Criar acesso</button>
+      </form>
+    </section>
+
     <!-- APP -->
     <div id="app" class="app hidden">
       <header class="appbar">
         <img src="assets/logo/logo.png" alt="" class="appbar-logo" width="32" height="32" />
         <h1>COMISSIONADO</h1>
+        <button id="btnSair" class="icon-btn logout-btn" title="Sair"><i class="mi">logout</i></button>
       </header>
 
       <main class="content">

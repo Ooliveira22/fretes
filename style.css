@@ -25,6 +25,21 @@ html, body {
 
 .hidden { display: none !important; }
 
+.login {
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  background: radial-gradient(120% 80% at 50% 20%, #1b5e20 0%, #121212 70%);
+}
+.login h1 { margin: 8px 0 0; letter-spacing: 3px; font-size: 24px; }
+.login p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+.login-form { width: min(100%, 360px); display: grid; gap: 10px; }
+.login-form input { background: var(--card-2); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; color: var(--text); font: inherit; outline: none; }
+.login-form input:focus { border-color: var(--secondary); }
+
 .mi {
   font-family: "Material Icons";
   font-style: normal;
@@ -76,6 +91,7 @@ html, body {
 }
 .appbar-logo { border-radius: 9px; }
 .appbar h1 { margin: 0; font-size: 18px; letter-spacing: 3px; font-weight: 700; }
+.logout-btn { margin-left: auto; color: var(--text); }
 
 .content { max-width: 720px; margin: 0 auto; padding: 18px 16px 0; display: grid; gap: 16px; }
 
