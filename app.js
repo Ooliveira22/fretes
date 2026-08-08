@@ -305,6 +305,7 @@
     var id = $("id").value;
     var valorComissao = Number($("valorComissao").value) || 0;
     var valorRecebido = Number($("valorRecebidoParcial").value) || 0;
+    var saldoPendente = valorComissao - valorRecebido;
     if (statusAtual === "Parcial" && (!id || valorRecebido <= 0 || valorRecebido >= valorComissao)) {
       toast(id ? "Informe um valor menor que a comissão total." : "O recebimento parcial só está disponível na edição.");
       return;
@@ -315,7 +316,7 @@
       destino: $("destino").value.trim(),
       cliente: $("cliente").value.trim(),
       valorFrete: Number($("valorFrete").value) || 0,
-      valorComissao: valorComissao,
+      valorComissao: statusAtual === "Parcial" ? saldoPendente : valorComissao,
       status: statusAtual === "Parcial" ? "A Receber" : statusAtual,
       observacoes: $("observacoes").value.trim(),
       dataCriacao: agora,
