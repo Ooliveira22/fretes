@@ -94,6 +94,11 @@
     }
   }
 
+  async function deleteRemote(frete) {
+    if (!firestore || !isOnline() || !frete.remoteId) return;
+    await firestore.collection("fretes").doc(frete.remoteId).delete();
+  }
+
   function tx(mode) { return db.transaction(STORE, mode).objectStore(STORE); }
 
   function getAll() {
@@ -361,7 +366,15 @@
     var id = $("id").value;
     if (!id) return;
     if (!confirm("Excluir este frete definitivamente?")) return;
-    await remove(id);
+    var frete = cache.filter(function (item) { return String(item.id) === String(id); })[0];
+    try {
+      await deleteRemote(frete || {});
+      await remove(id);
+    } catch (err) {
+      console.warn("deleteRemote failed", err);
+      toast("Não foi possível excluir o frete.");
+      return;
+    }
     fecharSheet();
     if (firestore && isOnline()) {
       await syncWithFirestore();
