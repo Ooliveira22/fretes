@@ -510,6 +510,14 @@
       db = await openDB();
       firestore = firebaseInit();
       if (!firestore) throw new Error("Firebase indisponível");
+      $("app").classList.remove("hidden");
+      $("login").classList.add("hidden");
+      $("btnNovo").classList.add("hidden");
+      $("btnAdmin").classList.remove("hidden");
+      $("btnSair").classList.add("hidden");
+      aplicarPermissoes();
+      await recarregar();
+      await syncWithFirestore();
       firebase.auth().onAuthStateChanged(async function (user) {
         if (!user) {
           try {
@@ -537,13 +545,10 @@
         $("btnAdmin").classList.toggle("hidden", isAdmin);
         $("btnSair").classList.toggle("hidden", !isAdmin);
         aplicarPermissoes();
-        await recarregar();
-        await syncWithFirestore();
       });
       window.addEventListener("online", syncWithFirestore);
     } catch (err) {
       $("app").classList.remove("hidden");
-      splash();
       recarregar();
       toast("Falha ao abrir o banco local.");
     }
