@@ -441,7 +441,7 @@
     }
     window.addEventListener("load", function () {
       navigator.serviceWorker
-        .register("service-worker.js?v=9", { scope: "./" })
+        .register("service-worker.js?v=10", { scope: "./" })
         .then(function (registration) {
           if (registration.waiting) {
             registration.waiting.postMessage({ type: "SKIP_WAITING" });

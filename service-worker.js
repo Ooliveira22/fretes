@@ -1,9 +1,9 @@
-const CACHE = "comissionado-v9";
+const CACHE = "comissionado-v10";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
-  "./app.js?v=8",
+  "./app.js?v=10",
   "./manifest.json",
   "./firebase-config.js",
   "./assets/fonts/fonts.css",
