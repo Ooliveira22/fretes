@@ -173,11 +173,15 @@
   }
 
   /* ---------- Render ---------- */
-  function totais(itens) {
+  function totais(todos, mesSelecionadoItens) {
     var pend = 0, rec = 0, qp = 0, qr = 0;
-    itens.forEach(function (f) {
+    todos.forEach(function (f) {
       var v = numero(f.valorComissao);
-      if (f.status === "Recebido") { rec += v; qr++; } else { pend += v; qp++; }
+      if (f.status !== "Recebido") { pend += v; qp++; }
+    });
+    mesSelecionadoItens.forEach(function (f) {
+      var v = numero(f.valorComissao);
+      if (f.status === "Recebido") { rec += v; qr++; }
     });
     $("valorPendente").textContent = brl(pend);
     $("valorRecebido").textContent = brl(rec);
@@ -191,7 +195,7 @@
       return String(f.data || "").slice(0, 7) === mesSelecionado;
     });
 
-    totais(itens);
+    totais(cache, itens);
     $("mesAtual").textContent = nomeMes(mesSelecionado);
 
     if (termo) {
