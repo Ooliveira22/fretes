@@ -17,11 +17,14 @@ Site PWA para controle de fretes e comissoes.
 6. No GitHub, vá em Settings > Pages e selecione o branch `main` e a pasta `/ (root)`.
 7. Aguarde alguns minutos e acesse a URL do GitHub Pages para testar o app online.
 
-## Banco privado no Firebase
+## Banco no Firebase com leitura pública e escrita privada
 
-1. No Firebase Console, abra `Authentication > Sign-in method` e ative `Anônimo` e `E-mail/senha`.
-2. Em `Firestore Database > Rules`, publique o conteúdo do arquivo `firestore.rules`.
-3. Crie o usuário administrador com o e-mail configurado no app. Visitantes entram como visualizadores e não podem alterar fretes.
+1. No Firebase Console, abra `Authentication > Sign-in method` e ative somente `E-mail/senha`.
+2. Crie o usuário administrador com o e-mail configurado no app e confirme o endereço de e-mail.
+3. Em `Firestore Database > Rules`, publique o conteúdo do arquivo `firestore.rules`.
+4. Use HTTPS em produção. O Firebase Hosting aplica os headers definidos em `firebase.json`; no GitHub Pages, mantenha o domínio HTTPS e considere o Firebase Hosting para aplicar os headers HTTP.
 
 O arquivo `firebase.json` permite publicar as regras com o Firebase CLI usando `firebase deploy --only firestore:rules`.
+
+Qualquer visitante pode ler os fretes. Somente o administrador com e-mail verificado pode criar, editar ou excluir documentos. A chave `apiKey` do Firebase presente no frontend identifica o projeto, mas não substitui as regras do Firestore e não deve ser tratada como senha.
 

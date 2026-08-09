@@ -82,7 +82,7 @@
   }
 
   async function saveRemote(frete) {
-    if (!firestore || !isOnline()) return;
+    if (!firestore || !isOnline() || !isAdmin || !userId) return;
     try {
       var remoteId = frete.remoteId;
       var data = Object.assign({}, frete, {});
@@ -102,7 +102,7 @@
   }
 
   async function deleteRemote(frete) {
-    if (!firestore || !isOnline() || !frete.remoteId) return;
+    if (!firestore || !isOnline() || !isAdmin || !userId || !frete.remoteId) return;
     await firestore.collection("fretes").doc(frete.remoteId).delete();
   }
 
@@ -421,7 +421,7 @@
     }
     window.addEventListener("load", function () {
       navigator.serviceWorker
-        .register("service-worker.js?v=4", { scope: "./" })
+        .register("service-worker.js?v=6", { scope: "./" })
         .then(function (registration) {
           if (registration.waiting) {
             registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -472,7 +472,7 @@
       var result = criar
         ? await auth.createUserWithEmailAndPassword(email, senha)
         : await auth.signInWithEmailAndPassword(email, senha);
-      if (criar || result.user.email !== OWNER_EMAIL) {
+      if (criar || result.user.email !== OWNER_EMAIL || !result.user.emailVerified) {
         await firebase.auth().signOut();
         toast("Somente o administrador pode entrar como editor.");
         return;
@@ -537,30 +537,25 @@
       $("btnAdmin").classList.remove("hidden");
       $("btnSair").classList.add("hidden");
       aplicarPermissoes();
-      await recarregar();
-      await syncWithFirestore();
       firebase.auth().onAuthStateChanged(async function (user) {
-        if (!user) {
-          try {
-            var result = await firebase.auth().signInAnonymously();
-            user = result.user;
-          } catch (err) {
-            console.warn("Anonymous access unavailable", err);
-          }
-        }
-        if (user && user.isAnonymous) {
-          userId = user.uid;
-          isAdmin = false;
-        } else if (user && user.email === OWNER_EMAIL) {
+        if (user && user.email === OWNER_EMAIL && user.emailVerified) {
           userId = user.uid;
           isAdmin = true;
-        } else if (!user) {
+        } else {
           userId = null;
           isAdmin = false;
-        } else {
+        }
+        if (user && !isAdmin) {
           await firebase.auth().signOut();
           return;
         }
+        if (isAdmin) {
+          await recarregar();
+        } else {
+          cache = [];
+          render();
+        }
+        await syncWithFirestore();
         $("login").classList.add("hidden");
         $("btnNovo").classList.toggle("hidden", !isAdmin);
         $("btnAdmin").classList.toggle("hidden", isAdmin);
@@ -570,7 +565,8 @@
       window.addEventListener("online", syncWithFirestore);
     } catch (err) {
       $("app").classList.remove("hidden");
-      recarregar();
+      cache = [];
+      render();
       toast("Falha ao abrir o banco local.");
     }
   });

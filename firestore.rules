@@ -2,10 +2,45 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'oliveira.simplicio22@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function validFrete() {
+      return request.resource.data.keys().hasOnly([
+          'data', 'origem', 'destino', 'cliente', 'valorFrete',
+          'valorComissao', 'status', 'observacoes', 'dataCriacao',
+          'ultimaAlteracao', 'ownerId'
+        ])
+        && request.resource.data.data is string
+        && request.resource.data.data.size() == 10
+        && request.resource.data.origem is string
+        && request.resource.data.origem.size() > 0
+        && request.resource.data.origem.size() <= 160
+        && request.resource.data.destino is string
+        && request.resource.data.destino.size() > 0
+        && request.resource.data.destino.size() <= 160
+        && request.resource.data.cliente is string
+        && request.resource.data.cliente.size() <= 160
+        && request.resource.data.observacoes is string
+        && request.resource.data.observacoes.size() <= 2000
+        && request.resource.data.valorFrete is number
+        && request.resource.data.valorFrete >= 0
+        && request.resource.data.valorComissao is number
+        && request.resource.data.valorComissao >= 0
+        && request.resource.data.status in ['A Receber', 'Recebido']
+        && request.resource.data.ownerId == request.auth.uid;
+    }
+
     match /fretes/{freteId} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null
-        && request.auth.token.email == 'oliveira.simplicio22@gmail.com';
+      allow create: if isAdmin() && validFrete();
+      allow update: if isAdmin()
+        && resource.data.ownerId == request.auth.uid
+        && validFrete();
+      allow delete: if isAdmin() && resource.data.ownerId == request.auth.uid;
     }
   }
 }
