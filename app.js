@@ -441,7 +441,7 @@
     }
     window.addEventListener("load", function () {
       navigator.serviceWorker
-        .register("service-worker.js?v=10", { scope: "./" })
+        .register("service-worker.js?v=11", { scope: "./" })
         .then(function (registration) {
           if (registration.waiting) {
             registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -533,6 +533,33 @@
     }
   }
 
+  async function reenviarVerificacao() {
+    var email = $("loginEmail").value.trim();
+    var senha = $("loginPassword").value;
+    if (!email || !senha) {
+      toast("Informe o e-mail e a senha para reenviar a confirmação.");
+      return;
+    }
+    try {
+      var result = await firebase.auth().signInWithEmailAndPassword(email, senha);
+      if (String(result.user.email || "").toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+        await firebase.auth().signOut();
+        toast("Use o e-mail do administrador.");
+        return;
+      }
+      if (result.user.emailVerified) {
+        await firebase.auth().signOut();
+        toast("Este e-mail já está confirmado. Tente entrar novamente.");
+        return;
+      }
+      await result.user.sendEmailVerification();
+      await firebase.auth().signOut();
+      toast("E-mail de confirmação reenviado. Verifique sua caixa de entrada.");
+    } catch (err) {
+      toast(err.code === "auth/invalid-credential" ? "E-mail ou senha inválidos." : "Não foi possível reenviar o e-mail.");
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", async function () {
     splash();
     registrarSW();
@@ -547,6 +574,7 @@
       e.preventDefault();
       entrar($("loginEmail").value.trim(), $("loginPassword").value, false);
     });
+    $("btnReenviarVerificacao").addEventListener("click", reenviarVerificacao);
     $("btnInstall").addEventListener("click", installApp);
     window.addEventListener("beforeinstallprompt", showInstallButton);
     window.addEventListener("load", showInstallOption);
