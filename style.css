@@ -17,6 +17,8 @@
 html, body {
   margin: 0;
   padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -99,14 +101,15 @@ html, body {
 .appbar-logo { border-radius: 9px; }
 .appbar h1 { margin: 0; font-size: 18px; letter-spacing: 3px; font-weight: 700; }
 
-.content { max-width: 720px; margin: 0 auto; padding: 18px 16px 0; display: grid; gap: 16px; }
+.content { width: 100%; max-width: 720px; min-width: 0; margin: 0 auto; padding: 18px 16px 0; display: grid; gap: 16px; }
 
-.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.month-summary { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 8px; }
+.cards { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-width: 0; gap: 12px; }
+.month-summary { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; min-width: 0; align-items: center; gap: 8px; }
 .month-arrow { width: 34px; height: 48px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; background: var(--card-2); color: var(--text); cursor: pointer; padding: 0; }
 .month-arrow:hover { background: var(--secondary); }
 .month-label { grid-column: 1 / -1; justify-self: center; color: var(--muted); font-size: 14px; text-transform: capitalize; }
 .card {
+  min-width: 0;
   background: var(--card);
   border-radius: var(--radius);
   padding: 16px;
@@ -120,7 +123,7 @@ html, body {
 .card-label { font-size: 11px; letter-spacing: 1.4px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .card-pending .card-label .mi { color: var(--accent); }
 .card-paid .card-label .mi { color: #66bb6a; }
-.card-value { font-size: 22px; font-weight: 700; }
+.card-value { min-width: 0; font-size: 22px; font-weight: 700; }
 .card-pending .card-value { color: var(--accent); }
 .card-paid .card-value { color: #66bb6a; }
 .card-meta { font-size: 12px; color: var(--muted); }
@@ -199,7 +202,7 @@ html, body {
 .item.recebido { border-left-color: #66bb6a; }
 .item-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .item-date { font-size: 12px; color: var(--muted); }
-.item-route { font-size: 15px; font-weight: 600; }
+.item-route { min-width: 0; overflow-wrap: anywhere; font-size: 15px; font-weight: 600; }
 .item-bottom { display: flex; justify-content: space-between; align-items: center; }
 .item-value { font-size: 17px; font-weight: 700; color: var(--accent); }
 .item.recebido .item-value { color: #66bb6a; }
