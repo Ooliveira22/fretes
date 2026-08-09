@@ -12,6 +12,7 @@
   var OWNER_EMAIL = "oliveira.simplicio22@gmail.com";
   var ordemDesc = true;
   var cache = [];
+  var mesSelecionado = hoje().slice(0, 7);
 
   function numero(valor) {
     if (typeof valor === "number") return valor;
@@ -150,6 +151,17 @@
   }
   function hoje() { return new Date().toISOString().slice(0, 10); }
   function $(id) { return document.getElementById(id); }
+  function nomeMes(mes) {
+    var partes = mes.split("-");
+    var data = new Date(Number(partes[0]), Number(partes[1]) - 1, 1);
+    return data.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  }
+  function alterarMes(delta) {
+    var partes = mesSelecionado.split("-");
+    var data = new Date(Number(partes[0]), Number(partes[1]) - 1 + delta, 1);
+    mesSelecionado = data.getFullYear() + "-" + String(data.getMonth() + 1).padStart(2, "0");
+    render();
+  }
 
   var toastTimer;
   function toast(msg) {
@@ -175,9 +187,12 @@
 
   function render() {
     var termo = $("busca").value.trim().toLowerCase();
-    var itens = cache.slice();
+    var itens = cache.filter(function (f) {
+      return String(f.data || "").slice(0, 7) === mesSelecionado;
+    });
 
     totais(itens);
+    $("mesAtual").textContent = nomeMes(mesSelecionado);
 
     if (termo) {
       itens = itens.filter(function (f) {
@@ -421,7 +436,7 @@
     }
     window.addEventListener("load", function () {
       navigator.serviceWorker
-        .register("service-worker.js?v=7", { scope: "./" })
+        .register("service-worker.js?v=8", { scope: "./" })
         .then(function (registration) {
           if (registration.waiting) {
             registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -534,6 +549,8 @@
       toast(ordemDesc ? "Mais recentes primeiro" : "Mais antigos primeiro");
       render();
     });
+    $("btnMesAnterior").addEventListener("click", function () { alterarMes(-1); });
+    $("btnProximoMes").addEventListener("click", function () { alterarMes(1); });
     $("valorFrete").addEventListener("input", calcularComissao);
     $("valorComissao").addEventListener("input", function () {
       $("valorComissao").dataset.manual = "true";

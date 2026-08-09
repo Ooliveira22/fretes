@@ -102,6 +102,10 @@ html, body {
 .content { max-width: 720px; margin: 0 auto; padding: 18px 16px 0; display: grid; gap: 16px; }
 
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.month-summary { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 8px; }
+.month-arrow { width: 34px; height: 48px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; background: var(--card-2); color: var(--text); cursor: pointer; padding: 0; }
+.month-arrow:hover { background: var(--secondary); }
+.month-label { grid-column: 1 / -1; justify-self: center; color: var(--muted); font-size: 14px; text-transform: capitalize; }
 .card {
   background: var(--card);
   border-radius: var(--radius);

@@ -51,17 +51,26 @@
       </header>
 
       <main class="content">
-        <section class="cards">
-          <article class="card card-pending">
-            <span class="card-label"><i class="mi">schedule</i> A RECEBER</span>
-            <strong class="card-value" id="valorPendente">R$ 0,00</strong>
-            <span class="card-meta"><span id="qtdPendente">0</span> fretes pendentes</span>
-          </article>
-          <article class="card card-paid">
-            <span class="card-label"><i class="mi">check_circle</i> RECEBIDO</span>
-            <strong class="card-value" id="valorRecebido">R$ 0,00</strong>
-            <span class="card-meta"><span id="qtdRecebido">0</span> fretes recebidos</span>
-          </article>
+        <section class="month-summary" aria-label="Resumo mensal">
+          <button id="btnMesAnterior" class="month-arrow" type="button" title="Mês anterior" aria-label="Mês anterior">
+            <i class="mi">chevron_left</i>
+          </button>
+          <div class="cards">
+            <article class="card card-pending">
+              <span class="card-label"><i class="mi">schedule</i> A RECEBER</span>
+              <strong class="card-value" id="valorPendente">R$ 0,00</strong>
+              <span class="card-meta"><span id="qtdPendente">0</span> fretes pendentes</span>
+            </article>
+            <article class="card card-paid">
+              <span class="card-label"><i class="mi">check_circle</i> RECEBIDO</span>
+              <strong class="card-value" id="valorRecebido">R$ 0,00</strong>
+              <span class="card-meta"><span id="qtdRecebido">0</span> fretes recebidos</span>
+            </article>
+          </div>
+          <button id="btnProximoMes" class="month-arrow" type="button" title="Próximo mês" aria-label="Próximo mês">
+            <i class="mi">chevron_right</i>
+          </button>
+          <strong id="mesAtual" class="month-label"></strong>
         </section>
 
         <button class="btn btn-primary btn-block admin-only" id="btnNovo">
@@ -114,6 +123,6 @@
     </section>
 
     <div id="toast" class="toast"></div>
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>
