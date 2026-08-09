@@ -507,9 +507,19 @@
       var result = criar
         ? await auth.createUserWithEmailAndPassword(email, senha)
         : await auth.signInWithEmailAndPassword(email, senha);
-      if (criar || result.user.email !== OWNER_EMAIL || !result.user.emailVerified) {
+      if (criar) {
         await firebase.auth().signOut();
         toast("Somente o administrador pode entrar como editor.");
+        return;
+      }
+      if (String(result.user.email || "").toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+        await firebase.auth().signOut();
+        toast("Use o e-mail do administrador para editar os fretes.");
+        return;
+      }
+      if (!result.user.emailVerified) {
+        await firebase.auth().signOut();
+        toast("Confirme o e-mail do administrador no Firebase antes de editar.");
         return;
       }
       userId = result.user.uid;
