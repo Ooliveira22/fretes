@@ -1,4 +1,4 @@
-const CACHE = "comissionado-v8";
+const CACHE = "comissionado-v9";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,9 +7,8 @@ const ASSETS = [
   "./manifest.json",
   "./firebase-config.js",
   "./assets/fonts/fonts.css",
-  "./assets/logo/logo.png",
-  "./assets/icons/icon-192.png",
-  "./assets/icons/icon-512.png",
+  "./assets/logo/logo-rs.svg",
+  "./assets/icons/icon-rs.svg",
 ];
 
 self.addEventListener("install", (event) => {

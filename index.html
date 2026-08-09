@@ -10,8 +10,8 @@
     <meta name="description" content="Controle offline de fretes e comissões: cadastre, edite e acompanhe valores a receber e recebidos." />
     <meta name="theme-color" content="#1B5E20" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="icon" href="assets/icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+    <link rel="icon" href="assets/icons/icon-rs.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icons/icon-rs.svg" />
     <link rel="stylesheet" href="assets/fonts/fonts.css" />
     <link rel="stylesheet" href="style.css" />
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -22,7 +22,7 @@
   <body>
     <!-- SPLASH -->
     <div id="splash" class="splash">
-      <img class="splash-logo" src="assets/logo/logo.png" alt="Logo COMISSIONADO" width="128" height="128" />
+      <img class="splash-logo" src="assets/logo/logo-rs.svg" alt="Logo COMISSIONADO" width="128" height="128" />
       <h1 class="splash-title">COMISSIONADO</h1>
       <p class="splash-sub">Controle de Fretes e Comissões</p>
       <span class="splash-version">Versão 0.1.18</span>
@@ -30,7 +30,7 @@
 
     <!-- LOGIN -->
     <section id="login" class="login hidden">
-      <img class="splash-logo" src="assets/logo/logo.png" alt="Logo COMISSIONADO" width="96" height="96" />
+      <img class="splash-logo" src="assets/logo/logo-rs.svg" alt="Logo COMISSIONADO" width="96" height="96" />
       <h1>COMISSIONADO</h1>
       <p>Acesso privado aos seus fretes</p>
       <form id="loginForm" class="login-form" novalidate>
@@ -44,7 +44,7 @@
     <!-- APP -->
     <div id="app" class="app hidden">
       <header class="appbar">
-        <img src="assets/logo/logo.png" alt="" class="appbar-logo" width="32" height="32" />
+        <img src="assets/logo/logo-rs.svg" alt="" class="appbar-logo" width="32" height="32" />
         <h1>COMISSIONADO</h1>
         <button id="btnAdmin" class="btn btn-login" title="Acesso do administrador"><i class="mi">lock</i> ENTRAR</button>
         <button id="btnSair" class="btn btn-login hidden" title="Sair"><i class="mi">logout</i> SAIR</button>
@@ -123,6 +123,6 @@
     </section>
 
     <div id="toast" class="toast"></div>
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>
