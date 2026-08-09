@@ -341,8 +341,9 @@
       toast(id ? "Informe um valor menor que a comissão total." : "O recebimento parcial só está disponível na edição.");
       return;
     }
+    var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
     var registro = {
-      data: $("data").value,
+      data: statusAtual === "Parcial" && antigo && antigo.data ? antigo.data : $("data").value,
       origem: $("origem").value.trim(),
       destino: $("destino").value.trim(),
       cliente: $("cliente").value.trim(),
@@ -355,7 +356,6 @@
       ownerId: userId,
     };
     if (id) {
-      var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
       registro.id = isNaN(Number(id)) ? id : Number(id);
       registro.dataCriacao = (antigo && antigo.dataCriacao) || agora;
       registro.remoteId = antigo && antigo.remoteId;
@@ -367,6 +367,7 @@
       var recebido = Object.assign({}, registro, {
         id: undefined,
         remoteId: undefined,
+        data: hoje(),
         valorComissao: valorRecebido,
         status: "Recebido",
         observacoes: registro.observacoes ? registro.observacoes + " (Recebimento parcial)" : "Recebimento parcial",
