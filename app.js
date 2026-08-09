@@ -421,7 +421,7 @@
     }
     window.addEventListener("load", function () {
       navigator.serviceWorker
-        .register("service-worker.js?v=6", { scope: "./" })
+        .register("service-worker.js?v=7", { scope: "./" })
         .then(function (registration) {
           if (registration.waiting) {
             registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -448,9 +448,24 @@
     installBtn.classList.remove("hidden");
   }
 
+  function isInstalled() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+
+  function showInstallOption() {
+    if (!isInstalled()) $("btnInstall").classList.remove("hidden");
+  }
+
   async function installApp() {
     var promptEvent = window.deferredInstallPrompt;
-    if (!promptEvent) return;
+    if (!promptEvent) {
+      var ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      toast(ios
+        ? "Toque em Compartilhar e depois em Adicionar à Tela de Início."
+        : "Abra o menu do navegador e toque em Instalar aplicativo ou Adicionar à tela inicial.");
+      return;
+    }
     promptEvent.prompt();
     var result = await promptEvent.userChoice;
     window.deferredInstallPrompt = null;
@@ -504,6 +519,7 @@
     });
     $("btnInstall").addEventListener("click", installApp);
     window.addEventListener("beforeinstallprompt", showInstallButton);
+    window.addEventListener("load", showInstallOption);
     window.addEventListener("appinstalled", function () {
       toast("Aplicativo instalado.");
       $("btnInstall").classList.add("hidden");
