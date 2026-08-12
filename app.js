@@ -9,7 +9,7 @@
   var firestore = null;
   var userId = null;
   var isAdmin = false;
-  var OWNER_EMAIL = (window.localConfig && window.localConfig.OWNER_EMAIL) || null;
+  var OWNER_EMAIL = "oliveira.simplicio22@gmail.com";
   var ordemDesc = true;
   var cache = [];
   var mesSelecionado = hoje().slice(0, 7);
@@ -512,10 +512,9 @@
         toast("Somente o administrador pode entrar como editor.");
         return;
       }
-      var idToken = await result.user.getIdTokenResult();
-      if (!(idToken && idToken.claims && idToken.claims.isAdmin)) {
+      if (!OWNER_EMAIL || String(result.user.email || "").toLowerCase() !== String(OWNER_EMAIL || "").toLowerCase()) {
         await firebase.auth().signOut();
-        toast("Conta sem permissão de administrador.");
+        toast("Use o e-mail do administrador para editar os fretes.");
         return;
       }
       if (!result.user.emailVerified) {
@@ -543,10 +542,9 @@
     }
     try {
       var result = await firebase.auth().signInWithEmailAndPassword(email, senha);
-      var idToken = await result.user.getIdTokenResult();
-      if (!(idToken && idToken.claims && idToken.claims.isAdmin)) {
+      if (!OWNER_EMAIL || String(result.user.email || "").toLowerCase() !== String(OWNER_EMAIL || "").toLowerCase()) {
         await firebase.auth().signOut();
-        toast("Conta sem permissão de administrador.");
+        toast("Use o e-mail do administrador.");
         return;
       }
       if (result.user.emailVerified) {
@@ -616,20 +614,9 @@
       $("btnSair").classList.add("hidden");
       aplicarPermissoes();
       firebase.auth().onAuthStateChanged(async function (user) {
-        if (user) {
-          try {
-            var idToken = await user.getIdTokenResult();
-            if (idToken && idToken.claims && idToken.claims.isAdmin && user.emailVerified) {
-              userId = user.uid;
-              isAdmin = true;
-            } else {
-              userId = null;
-              isAdmin = false;
-            }
-          } catch (ex) {
-            userId = null;
-            isAdmin = false;
-          }
+        if (user && String(user.email || "").toLowerCase() === String(OWNER_EMAIL || "").toLowerCase() && user.emailVerified) {
+          userId = user.uid;
+          isAdmin = true;
         } else {
           userId = null;
           isAdmin = false;
