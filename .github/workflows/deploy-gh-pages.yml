@@ -1,0 +1,29 @@
+name: Deploy to gh-pages with admin email
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create local-config.js from secret
+        run: |
+          if [ -z "${{ secrets.OWNER_EMAIL }}" ]; then
+            echo "window.localConfig = { OWNER_EMAIL: null };" > local-config.js
+          else
+            printf '%s\n' "window.localConfig = { OWNER_EMAIL: \"${{ secrets.OWNER_EMAIL }}\" };" > local-config.js
+          fi
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
+          user_name: github-actions
+          user_email: github-actions@github.com
