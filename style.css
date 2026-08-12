@@ -22,7 +22,8 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .hidden { display: none !important; }
