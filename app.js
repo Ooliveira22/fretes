@@ -512,9 +512,10 @@
         toast("Somente o administrador pode entrar como editor.");
         return;
       }
-      if (String(result.user.email || "").toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+      var idToken = await result.user.getIdTokenResult();
+      if (!(idToken && idToken.claims && idToken.claims.isAdmin)) {
         await firebase.auth().signOut();
-        toast("Use o e-mail do administrador para editar os fretes.");
+        toast("Conta sem permissão de administrador.");
         return;
       }
       if (!result.user.emailVerified) {
@@ -542,9 +543,10 @@
     }
     try {
       var result = await firebase.auth().signInWithEmailAndPassword(email, senha);
-      if (String(result.user.email || "").toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+      var idToken = await result.user.getIdTokenResult();
+      if (!(idToken && idToken.claims && idToken.claims.isAdmin)) {
         await firebase.auth().signOut();
-        toast("Use o e-mail do administrador.");
+        toast("Conta sem permissão de administrador.");
         return;
       }
       if (result.user.emailVerified) {
@@ -614,9 +616,20 @@
       $("btnSair").classList.add("hidden");
       aplicarPermissoes();
       firebase.auth().onAuthStateChanged(async function (user) {
-        if (user && user.email === OWNER_EMAIL && user.emailVerified) {
-          userId = user.uid;
-          isAdmin = true;
+        if (user) {
+          try {
+            var idToken = await user.getIdTokenResult();
+            if (idToken && idToken.claims && idToken.claims.isAdmin && user.emailVerified) {
+              userId = user.uid;
+              isAdmin = true;
+            } else {
+              userId = null;
+              isAdmin = false;
+            }
+          } catch (ex) {
+            userId = null;
+            isAdmin = false;
+          }
         } else {
           userId = null;
           isAdmin = false;
