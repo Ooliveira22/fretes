@@ -9,7 +9,7 @@
   var firestore = null;
   var userId = null;
   var isAdmin = false;
-  var OWNER_EMAIL = "oliveira.simplicio22@gmail.com";
+  var OWNER_EMAIL = (window.localConfig && window.localConfig.OWNER_EMAIL) || null;
   var ordemDesc = true;
   var cache = [];
   var mesSelecionado = hoje().slice(0, 7);

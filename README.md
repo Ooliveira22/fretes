@@ -28,3 +28,10 @@ O arquivo `firebase.json` permite publicar as regras com o Firebase CLI usando `
 
 Qualquer visitante pode ler os fretes. Somente o administrador com e-mail verificado pode criar, editar ou excluir documentos. A chave `apiKey` do Firebase presente no frontend identifica o projeto, mas não substitui as regras do Firestore e não deve ser tratada como senha.
 
+Segurança local
+1. Crie um arquivo `local-config.js` na raiz do projeto copiando `local-config.example.js`.
+2. No `local-config.js`, defina seu e-mail de administrador em `window.localConfig.OWNER_EMAIL`.
+3. Não comite `local-config.js` — ele já está listado em `.gitignore`.
+
+Exemplo de uso: o aplicativo lerá `window.localConfig.OWNER_EMAIL` para validar o administrador sem manter o e-mail no código versionado.
+
