@@ -177,11 +177,16 @@
     var pend = 0, rec = 0, qp = 0, qr = 0;
     todos.forEach(function (f) {
       var v = numero(f.valorComissao);
-      if (f.status !== "Recebido") { pend += v; qp++; }
+      if (f.status === "Recebido" || f.status === "Parcial") {
+        rec += v;
+      } else {
+        pend += v;
+        qp++;
+      }
     });
     mesSelecionadoItens.forEach(function (f) {
       var v = numero(f.valorComissao);
-      if (f.status === "Recebido") { rec += v; qr++; }
+      if (f.status === "Recebido" || f.status === "Parcial") { rec += v; qr++; }
     });
     $("valorPendente").textContent = brl(pend);
     $("valorRecebido").textContent = brl(rec);
@@ -215,15 +220,16 @@
     $("vazio").classList.toggle("hidden", itens.length > 0);
 
     itens.forEach(function (f, i) {
-      var recebido = f.status === "Recebido";
+      var status = f.status === "Recebido" ? "Recebido" : f.status === "Parcial" ? "Parcial" : "A Receber";
+      var classStatus = status === "Recebido" ? "recebido" : status === "Parcial" ? "parcial" : "pendente";
       var li = document.createElement("li");
-      li.className = "item " + (recebido ? "recebido" : "pendente");
+      li.className = "item " + classStatus;
       li.style.animationDelay = Math.min(i * 30, 300) + "ms";
       li.tabIndex = 0;
       li.innerHTML =
         '<div class="item-top">' +
           '<span class="item-date">' + dataBR(f.data) + "</span>" +
-          '<span class="badge ' + (recebido ? "recebido" : "pendente") + '">' + (recebido ? "Recebido" : "A Receber") + "</span>" +
+          '<span class="badge ' + classStatus + '">' + status + "</span>" +
         "</div>" +
         '<div class="item-route">' + esc(f.origem) + " → " + esc(f.destino) + "</div>" +
         '<div class="item-bottom">' +
@@ -317,7 +323,7 @@
     $("valorRecebidoParcial").value = "";
     $("observacoes").value = f.observacoes || "";
     $("parcialBtn").classList.remove("hidden");
-    setStatus(f.status === "Recebido" ? "Recebido" : "A Receber");
+    setStatus(f.status === "Recebido" ? "Recebido" : f.status === "Parcial" ? "Parcial" : "A Receber");
     $("btnExcluir").classList.remove("hidden");
     $("btnExcluir").classList.toggle("hidden", !isAdmin);
     aplicarPermissoes();
@@ -364,12 +370,13 @@
     registro.id = key;
     await saveRemote(registro);
     if (statusAtual === "Parcial") {
+      var statusRecebido = valorRecebido >= valorComissao ? "Recebido" : "Parcial";
       var recebido = Object.assign({}, registro, {
         id: undefined,
         remoteId: undefined,
         data: hoje(),
         valorComissao: valorRecebido,
-        status: "Recebido",
+        status: statusRecebido,
         observacoes: registro.observacoes ? registro.observacoes + " (Recebimento parcial)" : "Recebimento parcial",
         dataCriacao: agora,
         ultimaAlteracao: agora,
