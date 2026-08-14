@@ -197,7 +197,8 @@
   function render() {
     var termo = $("busca").value.trim().toLowerCase();
     var itens = cache.filter(function (f) {
-      return String(f.data || "").slice(0, 7) === mesSelecionado;
+      var dataExibicao = f.dataRecebimento || f.data || "";
+      return String(dataExibicao).slice(0, 7) === mesSelecionado;
     });
 
     totais(cache, itens);
@@ -222,13 +223,14 @@
     itens.forEach(function (f, i) {
       var status = f.status === "Recebido" ? "Recebido" : f.status === "Parcial" ? "Parcial" : "A Receber";
       var classStatus = status === "Recebido" ? "recebido" : status === "Parcial" ? "parcial" : "pendente";
+      var dataItem = f.dataRecebimento || f.data || hoje();
       var li = document.createElement("li");
       li.className = "item " + classStatus;
       li.style.animationDelay = Math.min(i * 30, 300) + "ms";
       li.tabIndex = 0;
       li.innerHTML =
         '<div class="item-top">' +
-          '<span class="item-date">' + dataBR(f.data) + "</span>" +
+          '<span class="item-date">' + dataBR(dataItem) + "</span>" +
           '<span class="badge ' + classStatus + '">' + status + "</span>" +
         "</div>" +
         '<div class="item-route">' + esc(f.origem) + " → " + esc(f.destino) + "</div>" +
@@ -343,8 +345,9 @@
     var valorComissao = Number($("valorComissao").value) || 0;
     var valorRecebido = Number($("valorRecebidoParcial").value) || 0;
     var saldoPendente = valorComissao - valorRecebido;
-    if (statusAtual === "Parcial" && (!id || valorRecebido <= 0 || valorRecebido >= valorComissao)) {
-      toast(id ? "Informe um valor menor que a comissão total." : "O recebimento parcial só está disponível na edição.");
+    var recebeuTotal = statusAtual === "Parcial" && valorRecebido >= valorComissao;
+    if (statusAtual === "Parcial" && (!id || valorRecebido <= 0)) {
+      toast(id ? "Informe um valor maior que zero." : "O recebimento parcial só está disponível na edição.");
       return;
     }
     var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
@@ -354,8 +357,8 @@
       destino: $("destino").value.trim(),
       cliente: $("cliente").value.trim(),
       valorFrete: numero($("valorFrete").value),
-      valorComissao: statusAtual === "Parcial" ? saldoPendente : valorComissao,
-      status: statusAtual === "Parcial" ? "A Receber" : statusAtual,
+      valorComissao: statusAtual === "Parcial" ? (recebeuTotal ? valorComissao : saldoPendente) : valorComissao,
+      status: statusAtual === "Parcial" ? (recebeuTotal ? "Recebido" : "A Receber") : statusAtual,
       observacoes: $("observacoes").value.trim(),
       dataCriacao: agora,
       ultimaAlteracao: agora,
@@ -369,12 +372,13 @@
     var key = await put(registro);
     registro.id = key;
     await saveRemote(registro);
-    if (statusAtual === "Parcial") {
-      var statusRecebido = valorRecebido >= valorComissao ? "Recebido" : "Parcial";
+    if (statusAtual === "Parcial" && !recebeuTotal) {
+      var statusRecebido = "Parcial";
       var recebido = Object.assign({}, registro, {
         id: undefined,
         remoteId: undefined,
         data: hoje(),
+        dataRecebimento: hoje(),
         valorComissao: valorRecebido,
         status: statusRecebido,
         observacoes: registro.observacoes ? registro.observacoes + " (Recebimento parcial)" : "Recebimento parcial",
