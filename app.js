@@ -177,16 +177,16 @@
     var pend = 0, rec = 0, qp = 0, qr = 0;
     todos.forEach(function (f) {
       var v = numero(f.valorComissao);
-      if (f.status === "Recebido" || f.status === "Parcial") {
-        rec += v;
-      } else {
-        pend += v;
-        qp++;
-      }
+      if (f.status === "Recebido" || f.status === "Parcial") return;
+      pend += v;
+      qp++;
     });
     mesSelecionadoItens.forEach(function (f) {
       var v = numero(f.valorComissao);
-      if (f.status === "Recebido" || f.status === "Parcial") { rec += v; qr++; }
+      if (f.status === "Recebido" || f.status === "Parcial") {
+        rec += v;
+        qr++;
+      }
     });
     $("valorPendente").textContent = brl(pend);
     $("valorRecebido").textContent = brl(rec);
