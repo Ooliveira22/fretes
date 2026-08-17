@@ -172,18 +172,27 @@
   /* ---------- Helpers ---------- */
   var moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
   function brl(v) { return moeda.format(Number(v) || 0); }
+
   function dataBR(iso) {
     if (!iso) return "--/--/----";
     var p = iso.split("-");
     return p[2] + "/" + p[1] + "/" + p[0];
   }
-  function hoje() { return new Date().toISOString().slice(0, 10); }
-  function $(id) { return document.getElementById(id); }
+
+  function hoje() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
   function nomeMes(mes) {
     var partes = mes.split("-");
     var data = new Date(Number(partes[0]), Number(partes[1]) - 1, 1);
     return data.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   }
+
   function alterarMes(delta) {
     var partes = mesSelecionado.split("-");
     var data = new Date(Number(partes[0]), Number(partes[1]) - 1 + delta, 1);
@@ -192,19 +201,24 @@
   }
 
   var toastTimer;
+
   function toast(msg) {
     var el = $("toast");
     el.textContent = msg;
     el.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2200);
+    toastTimer = setTimeout(function () {
+      el.classList.remove("show");
+    }, 2200);
   }
 
   /* ---------- Render ---------- */
   function totais(itensMes) {
     var pend = 0, rec = 0, qp = 0, qr = 0;
+
     itensMes.forEach(function (f) {
       var v = numero(f.valorComissao);
+
       if (f.status === "Recebido" || f.status === "Parcial") {
         rec += v;
         qr++;
@@ -213,6 +227,7 @@
         qp++;
       }
     });
+
     $("valorPendente").textContent = brl(pend);
     $("valorRecebido").textContent = brl(rec);
     $("qtdPendente").textContent = qp;
@@ -221,6 +236,7 @@
 
   function render() {
     var termo = $("busca").value.trim().toLowerCase();
+
     var itens = cache.filter(function (f) {
       var dataExibicao = f.dataRecebimento || f.data || "";
       return String(dataExibicao).slice(0, 7) === mesSelecionado;
@@ -232,7 +248,9 @@
     if (termo) {
       itens = itens.filter(function (f) {
         return [f.origem, f.destino, f.cliente, f.observacoes, f.status]
-          .join(" ").toLowerCase().indexOf(termo) !== -1;
+          .join(" ")
+          .toLowerCase()
+          .indexOf(termo) !== -1;
       });
     }
 
@@ -246,31 +264,60 @@
     $("vazio").classList.toggle("hidden", itens.length > 0);
 
     itens.forEach(function (f, i) {
-      var status = f.status === "Recebido" ? "Recebido" : f.status === "Parcial" ? "Parcial" : "A Receber";
-      var classStatus = status === "Recebido" ? "recebido" : status === "Parcial" ? "parcial" : "pendente";
+      var status =
+        f.status === "Recebido"
+          ? "Recebido"
+          : f.status === "Parcial"
+            ? "Parcial"
+            : "A Receber";
+
+      var classStatus =
+        status === "Recebido"
+          ? "recebido"
+          : status === "Parcial"
+            ? "parcial"
+            : "pendente";
+
       var dataItem = f.dataRecebimento || f.data || hoje();
+
       var li = document.createElement("li");
       li.className = "item " + classStatus;
       li.style.animationDelay = Math.min(i * 30, 300) + "ms";
       li.tabIndex = 0;
+
       li.innerHTML =
         '<div class="item-top">' +
           '<span class="item-date">' + dataBR(dataItem) + "</span>" +
           '<span class="badge ' + classStatus + '">' + status + "</span>" +
         "</div>" +
-        '<div class="item-route">' + esc(f.origem) + " → " + esc(f.destino) + "</div>" +
+        '<div class="item-route">' +
+          esc(f.origem) + " → " + esc(f.destino) +
+        "</div>" +
         '<div class="item-bottom">' +
-          '<span class="item-date">' + (f.cliente ? esc(f.cliente) : "Sem cliente") + "</span>" +
-          '<span class="item-value">' + brl(numero(f.valorComissao)) + "</span>" +
+          '<span class="item-date">' +
+            (f.cliente ? esc(f.cliente) : "Sem cliente") +
+          "</span>" +
+          '<span class="item-value">' +
+            brl(numero(f.valorComissao)) +
+          "</span>" +
         "</div>";
-      li.addEventListener("click", function () { abrir(f); });
+
+      li.addEventListener("click", function () {
+        abrir(f);
+      });
+
       lista.appendChild(li);
     });
   }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;"
+      }[c];
     });
   }
 
@@ -284,19 +331,31 @@
 
   function setStatus(valor) {
     statusAtual = valor;
-    Array.prototype.forEach.call(document.querySelectorAll(".seg"), function (b) {
-      b.classList.toggle("active", b.dataset.status === valor);
-    });
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll(".seg"),
+      function (b) {
+        b.classList.toggle("active", b.dataset.status === valor);
+      }
+    );
+
     $("parcialGroup").classList.toggle("hidden", valor !== "Parcial");
   }
 
   function aplicarPermissoes() {
-    Array.prototype.forEach.call(document.querySelectorAll(".admin-only"), function (el) {
-      el.classList.toggle("hidden", !isAdmin);
-    });
-    Array.prototype.forEach.call(document.querySelectorAll("#form input, #form textarea, #form .seg"), function (el) {
-      el.disabled = !isAdmin;
-    });
+    Array.prototype.forEach.call(
+      document.querySelectorAll(".admin-only"),
+      function (el) {
+        el.classList.toggle("hidden", !isAdmin);
+      }
+    );
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll("#form input, #form textarea, #form .seg"),
+      function (el) {
+        el.disabled = !isAdmin;
+      }
+    );
   }
 
   function abrirSheet() {
@@ -310,7 +369,10 @@
   }
 
   function novo() {
-    if (!isAdmin) return toast("Apenas o administrador pode alterar fretes.");
+    if (!isAdmin) {
+      return toast("Apenas o administrador pode alterar fretes.");
+    }
+
     $("sheetTitle").textContent = "Novo Frete";
     $("form").reset();
     $("id").value = "";
@@ -332,10 +394,10 @@
 
   function calcularComissao() {
     if ($("valorComissao").dataset.manual === "true") return;
+
     var frete = numero($("valorFrete").value);
     $("valorComissao").value = (frete * 0.15).toFixed(2);
   }
-
 
   function abrir(f) {
     $("sheetTitle").textContent = "Editar Frete";
@@ -350,28 +412,46 @@
     $("valorRecebidoParcial").value = "";
     $("observacoes").value = f.observacoes || "";
     $("parcialBtn").classList.remove("hidden");
-    setStatus(f.status === "Recebido" ? "Recebido" : f.status === "Parcial" ? "Parcial" : "A Receber");
+
+    setStatus(
+      f.status === "Recebido"
+        ? "Recebido"
+        : f.status === "Parcial"
+          ? "Parcial"
+          : "A Receber"
+    );
+
     $("btnExcluir").classList.remove("hidden");
     $("btnExcluir").classList.toggle("hidden", !isAdmin);
+
     aplicarPermissoes();
     abrirSheet();
   }
 
-
   async function salvar(e) {
     e.preventDefault();
-    if (!isAdmin) return toast("Apenas o administrador pode alterar fretes.");
-    if (!$("data").value || !$("origem").value.trim() || !$("destino").value.trim()) {
+
+    if (!isAdmin) {
+      return toast("Apenas o administrador pode alterar fretes.");
+    }
+
+    if (
+      !$("data").value ||
+      !$("origem").value.trim() ||
+      !$("destino").value.trim()
+    ) {
       toast("Preencha data, origem e destino.");
       return;
     }
+
     var agora = new Date().toISOString();
     var id = $("id").value;
     var valorComissao = numero($("valorComissao").value);
     var valorRecebido = numero($("valorRecebidoParcial").value);
     var saldoPendente = valorComissao - valorRecebido;
-    var recebeuTotal = statusAtual === "Parcial" && valorRecebido >= valorComissao;
-    
+    var recebeuTotal =
+      statusAtual === "Parcial" && valorRecebido >= valorComissao;
+
     console.log("DEBUG salvar:", {
       statusAtual: statusAtual,
       valorRecebido: valorRecebido,
@@ -379,15 +459,19 @@
       isAdmin: isAdmin,
       userId: userId
     });
-    
+
     if (statusAtual === "Parcial" && valorRecebido <= 0) {
       toast("Informe um valor maior que zero para o recebimento parcial.");
       return;
     }
-    var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
-    
+
+    var antigo = cache.filter(function (f) {
+      return String(f.id) === String(id);
+    })[0];
+
     // Para pagamento parcial, criar novo registro com valor recebido
     var novoRegistro = null;
+
     if (statusAtual === "Parcial" && valorRecebido > 0 && id) {
       novoRegistro = {
         data: hoje(),
@@ -398,17 +482,30 @@
         valorFrete: 0,
         valorComissao: valorRecebido,
         status: "Parcial",
-        observacoes: $("observacoes").value.trim() ? $("observacoes").value.trim() + " (Recebimento parcial)" : "Recebimento parcial",
+        observacoes: $("observacoes").value.trim()
+          ? $("observacoes").value.trim() + " (Recebimento parcial)"
+          : "Recebimento parcial",
         dataCriacao: agora,
         ultimaAlteracao: agora,
         ownerId: userId,
       };
     }
-    
+
     // Registro principal não muda de status quando é parcial
-    var statusFinal = (id && statusAtual === "Parcial") ? (antigo ? antigo.status : "A Receber") : statusAtual;
+    var statusFinal =
+      id && statusAtual === "Parcial"
+        ? antigo
+          ? antigo.status
+          : "A Receber"
+        : statusAtual;
+
     var registro = {
       data: $("data").value,
+
+      // CORREÇÃO:
+      // dataRecebimento é salvo como string YYYY-MM-DD
+      dataRecebimento: $("data").value,
+
       origem: $("origem").value.trim(),
       destino: $("destino").value.trim(),
       cliente: $("cliente").value.trim(),
@@ -420,35 +517,49 @@
       ultimaAlteracao: agora,
       ownerId: userId,
     };
+
     if (id) {
       registro.id = isNaN(Number(id)) ? id : Number(id);
-      registro.dataCriacao = (antigo && antigo.dataCriacao) || agora;
+      registro.dataCriacao =
+        (antigo && antigo.dataCriacao) || agora;
       registro.remoteId = antigo && antigo.remoteId;
     }
+
     var key = await put(registro);
     registro.id = key;
     await saveRemote(registro);
-    
+
     // Se é pagamento parcial e tem ID (frete existente), salva novo registro
     if (novoRegistro) {
       novoRegistro.id = await put(novoRegistro);
       await saveRemote(novoRegistro);
     }
+
     fecharSheet();
+
     if (firestore && isOnline()) {
       await syncWithFirestore();
     } else {
       await recarregar();
     }
+
     toast(id ? "Frete atualizado." : "Frete cadastrado.");
   }
 
   async function excluir() {
-    if (!isAdmin) return toast("Apenas o administrador pode alterar fretes.");
+    if (!isAdmin) {
+      return toast("Apenas o administrador pode alterar fretes.");
+    }
+
     var id = $("id").value;
     if (!id) return;
+
     if (!confirm("Excluir este frete definitivamente?")) return;
-    var frete = cache.filter(function (item) { return String(item.id) === String(id); })[0];
+
+    var frete = cache.filter(function (item) {
+      return String(item.id) === String(id);
+    })[0];
+
     try {
       await deleteRemote(frete || {});
       await remove(id);
@@ -457,12 +568,15 @@
       toast("Não foi possível excluir o frete.");
       return;
     }
+
     fecharSheet();
+
     if (firestore && isOnline()) {
       await syncWithFirestore();
     } else {
       await recarregar();
     }
+
     toast("Frete excluído.");
   }
 
@@ -472,13 +586,18 @@
       var s = $("splash");
       s.classList.add("out");
       $("app").classList.remove("hidden");
-      setTimeout(function () { s.classList.add("hidden"); }, 450);
+
+      setTimeout(function () {
+        s.classList.add("hidden");
+      }, 450);
     }, 2000);
   }
 
   function registrarSW() {
     if (!("serviceWorker" in navigator)) return;
+
     var h = location.hostname;
+
     var preview =
       window.top !== window.self ||
       h.indexOf("id-preview--") === 0 ||
@@ -486,28 +605,48 @@
       /(^|\.)lovableproject(-dev)?\.com$/.test(h) ||
       /(^|\.)beta\.lovable\.dev$/.test(h) ||
       location.search.indexOf("sw=off") !== -1;
+
     if (preview) {
       navigator.serviceWorker.getRegistrations().then(function (regs) {
         regs.forEach(function (r) {
-          if (r.active && r.active.scriptURL.indexOf("/app/service-worker.js") !== -1) r.unregister();
+          if (
+            r.active &&
+            r.active.scriptURL.indexOf("/app/service-worker.js") !== -1
+          ) {
+            r.unregister();
+          }
         });
       });
+
       return;
     }
+
     window.addEventListener("load", function () {
       navigator.serviceWorker
         .register("service-worker.js?v=14", { scope: "./" })
         .then(function (registration) {
           if (registration.waiting) {
-            registration.waiting.postMessage({ type: "SKIP_WAITING" });
-          }
-          if (registration.installing) {
-            registration.installing.addEventListener("statechange", function () {
-              if (registration.installing.state === "installed" && navigator.serviceWorker.controller) {
-                registration.installing.postMessage({ type: "SKIP_WAITING" });
-              }
+            registration.waiting.postMessage({
+              type: "SKIP_WAITING"
             });
           }
+
+          if (registration.installing) {
+            registration.installing.addEventListener(
+              "statechange",
+              function () {
+                if (
+                  registration.installing.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  registration.installing.postMessage({
+                    type: "SKIP_WAITING"
+                  });
+                }
+              }
+            );
+          }
+
           if (navigator.serviceWorker.controller) {
             registration.update();
           }
@@ -519,32 +658,49 @@
   function showInstallButton(evt) {
     evt.preventDefault();
     window.deferredInstallPrompt = evt;
+
     var installBtn = $("btnInstall");
     installBtn.classList.remove("hidden");
   }
 
   function isInstalled() {
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true
+    );
   }
 
   function showInstallOption() {
-    if (!isInstalled()) $("btnInstall").classList.remove("hidden");
+    if (!isInstalled()) {
+      $("btnInstall").classList.remove("hidden");
+    }
   }
 
   async function installApp() {
     var promptEvent = window.deferredInstallPrompt;
+
     if (!promptEvent) {
-      var ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-      toast(ios
-        ? "Toque em Compartilhar e depois em Adicionar à Tela de Início."
-        : "Abra o menu do navegador e toque em Instalar aplicativo ou Adicionar à tela inicial.");
+      var ios =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" &&
+          navigator.maxTouchPoints > 1);
+
+      toast(
+        ios
+          ? "Toque em Compartilhar e depois em Adicionar à Tela de Início."
+          : "Abra o menu do navegador e toque em Instalar aplicativo ou Adicionar à tela inicial."
+      );
+
       return;
     }
+
     promptEvent.prompt();
+
     var result = await promptEvent.userChoice;
+
     window.deferredInstallPrompt = null;
     $("btnInstall").classList.add("hidden");
+
     if (result.outcome === "accepted") {
       toast("Aplicativo instalado com sucesso.");
     } else {
@@ -557,14 +713,21 @@
       toast("Configure o e-mail do administrador em local-config.js.");
       return;
     }
+
     $("login").classList.remove("hidden");
   }
 
   async function checkIsAdmin(user) {
     if (!user || !user.emailVerified) return false;
-    if (OWNER_EMAIL && String(user.email || "").toLowerCase() === String(OWNER_EMAIL).toLowerCase()) {
+
+    if (
+      OWNER_EMAIL &&
+      String(user.email || "").toLowerCase() ===
+        String(OWNER_EMAIL).toLowerCase()
+    ) {
       return true;
     }
+
     try {
       var token = await user.getIdTokenResult();
       return token.claims.isAdmin === true;
@@ -578,34 +741,53 @@
       toast("Configure o e-mail do administrador em local-config.js.");
       return;
     }
+
     try {
       var auth = firebase.auth();
+
       var result = criar
         ? await auth.createUserWithEmailAndPassword(email, senha)
         : await auth.signInWithEmailAndPassword(email, senha);
+
       if (criar) {
         await firebase.auth().signOut();
         toast("Somente o administrador pode entrar como editor.");
         return;
       }
-      if (!OWNER_EMAIL || String(result.user.email || "").toLowerCase() !== String(OWNER_EMAIL || "").toLowerCase()) {
+
+      if (
+        !OWNER_EMAIL ||
+        String(result.user.email || "").toLowerCase() !==
+          String(OWNER_EMAIL || "").toLowerCase()
+      ) {
         await firebase.auth().signOut();
         toast("Use o e-mail do administrador para editar os fretes.");
         return;
       }
+
       if (!result.user.emailVerified) {
         await firebase.auth().signOut();
-        toast("Confirme o e-mail do administrador no Firebase antes de editar.");
+        toast(
+          "Confirme o e-mail do administrador no Firebase antes de editar."
+        );
         return;
       }
+
       userId = result.user.uid;
       isAdmin = true;
+
       aplicarPermissoes();
+
       $("login").classList.add("hidden");
+
       await recarregar();
       await syncWithFirestore();
     } catch (err) {
-      toast(err.code === "auth/invalid-credential" ? "E-mail ou senha inválidos." : "Não foi possível entrar.");
+      toast(
+        err.code === "auth/invalid-credential"
+          ? "E-mail ou senha inválidos."
+          : "Não foi possível entrar."
+      );
     }
   }
 
@@ -614,119 +796,220 @@
       toast("Configure o e-mail do administrador em local-config.js.");
       return;
     }
+
     var email = $("loginEmail").value.trim();
     var senha = $("loginPassword").value;
+
     if (!email || !senha) {
       toast("Informe o e-mail e a senha para reenviar a confirmação.");
       return;
     }
+
     try {
-      var result = await firebase.auth().signInWithEmailAndPassword(email, senha);
-      if (!OWNER_EMAIL || String(result.user.email || "").toLowerCase() !== String(OWNER_EMAIL || "").toLowerCase()) {
+      var result =
+        await firebase.auth().signInWithEmailAndPassword(email, senha);
+
+      if (
+        !OWNER_EMAIL ||
+        String(result.user.email || "").toLowerCase() !==
+          String(OWNER_EMAIL || "").toLowerCase()
+      ) {
         await firebase.auth().signOut();
         toast("Use o e-mail do administrador.");
         return;
       }
+
       if (result.user.emailVerified) {
         await firebase.auth().signOut();
-        toast("Este e-mail já está confirmado. Tente entrar novamente.");
+        toast(
+          "Este e-mail já está confirmado. Tente entrar novamente."
+        );
         return;
       }
+
       await result.user.sendEmailVerification();
       await firebase.auth().signOut();
-      toast("E-mail de confirmação reenviado. Verifique sua caixa de entrada.");
+
+      toast(
+        "E-mail de confirmação reenviado. Verifique sua caixa de entrada."
+      );
     } catch (err) {
-      toast(err.code === "auth/invalid-credential" ? "E-mail ou senha inválidos." : "Não foi possível reenviar o e-mail.");
+      toast(
+        err.code === "auth/invalid-credential"
+          ? "E-mail ou senha inválidos."
+          : "Não foi possível reenviar o e-mail."
+      );
     }
   }
 
-  document.addEventListener("DOMContentLoaded", async function () {
-    splash();
-    registrarSW();
+  document.addEventListener(
+    "DOMContentLoaded",
+    async function () {
+      splash();
+      registrarSW();
 
-    $("btnNovo").addEventListener("click", novo);
-    $("btnAdmin").addEventListener("click", function () {
-      mostrarLogin();
-    });
-    $("btnSair").addEventListener("click", function () {
-      if (window.firebase && firebase.auth) firebase.auth().signOut();
-    });
-    $("btnFecharLogin").addEventListener("click", function () { $("login").classList.add("hidden"); });
-    $("loginForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      entrar($("loginEmail").value.trim(), $("loginPassword").value, false);
-    });
-    $("btnReenviarVerificacao").addEventListener("click", reenviarVerificacao);
-    $("btnInstall").addEventListener("click", installApp);
-    window.addEventListener("beforeinstallprompt", showInstallButton);
-    window.addEventListener("load", showInstallOption);
-    window.addEventListener("appinstalled", function () {
-      toast("Aplicativo instalado.");
-      $("btnInstall").classList.add("hidden");
-    });
-    $("btnCancelar").addEventListener("click", fecharSheet);
-    $("backdrop").addEventListener("click", fecharSheet);
-    $("btnExcluir").addEventListener("click", excluir);
-    $("form").addEventListener("submit", salvar);
-    $("busca").addEventListener("input", render);
-    $("btnOrdem").addEventListener("click", function () {
-      ordemDesc = !ordemDesc;
-      toast(ordemDesc ? "Mais recentes primeiro" : "Mais antigos primeiro");
-      render();
-    });
-    $("btnMesAnterior").addEventListener("click", function () { alterarMes(-1); });
-    $("btnProximoMes").addEventListener("click", function () { alterarMes(1); });
-    $("valorFrete").addEventListener("input", calcularComissao);
-    $("valorComissao").addEventListener("input", function () {
-      $("valorComissao").dataset.manual = "true";
-    });
-    Array.prototype.forEach.call(document.querySelectorAll(".seg"), function (b) {
-      b.addEventListener("click", function () { setStatus(b.dataset.status); });
-    });
+      $("btnNovo").addEventListener("click", novo);
 
-
-    try {
-      db = await openDB();
-    } catch (err) {
-      $("app").classList.remove("hidden");
-      toast("Falha ao abrir o banco local.");
-      return;
-    }
-
-    $("app").classList.remove("hidden");
-    $("login").classList.add("hidden");
-    $("btnNovo").classList.add("hidden");
-    $("btnAdmin").classList.toggle("hidden", !OWNER_EMAIL);
-    $("btnSair").classList.add("hidden");
-    aplicarPermissoes();
-
-    firestore = firebaseInit();
-    if (firestore) {
-      firebase.auth().onAuthStateChanged(async function (user) {
-        isAdmin = await checkIsAdmin(user);
-        userId = isAdmin && user ? user.uid : null;
-        if (user && !isAdmin) {
-          await firebase.auth().signOut();
-          return;
-        }
-        if (isAdmin) {
-          await recarregar();
-        } else {
-          cache = [];
-          render();
-        }
-        await syncWithFirestore();
-        $("login").classList.add("hidden");
-        $("btnNovo").classList.toggle("hidden", !isAdmin);
-        $("btnAdmin").classList.toggle("hidden", !OWNER_EMAIL || isAdmin);
-        $("btnSair").classList.toggle("hidden", !isAdmin);
-        aplicarPermissoes();
+      $("btnAdmin").addEventListener("click", function () {
+        mostrarLogin();
       });
-      window.addEventListener("online", syncWithFirestore);
-      await syncWithFirestore();
-    } else {
-      await recarregar();
-      toast("Modo offline — sincronização indisponível.");
+
+      $("btnSair").addEventListener("click", function () {
+        if (window.firebase && firebase.auth) {
+          firebase.auth().signOut();
+        }
+      });
+
+      $("btnFecharLogin").addEventListener("click", function () {
+        $("login").classList.add("hidden");
+      });
+
+      $("loginForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        entrar(
+          $("loginEmail").value.trim(),
+          $("loginPassword").value,
+          false
+        );
+      });
+
+      $("btnReenviarVerificacao").addEventListener(
+        "click",
+        reenviarVerificacao
+      );
+
+      $("btnInstall").addEventListener("click", installApp);
+
+      window.addEventListener(
+        "beforeinstallprompt",
+        showInstallButton
+      );
+
+      window.addEventListener("load", showInstallOption);
+
+      window.addEventListener("appinstalled", function () {
+        toast("Aplicativo instalado.");
+        $("btnInstall").classList.add("hidden");
+      });
+
+      $("btnCancelar").addEventListener("click", fecharSheet);
+      $("backdrop").addEventListener("click", fecharSheet);
+      $("btnExcluir").addEventListener("click", excluir);
+      $("form").addEventListener("submit", salvar);
+      $("busca").addEventListener("input", render);
+
+      $("btnOrdem").addEventListener("click", function () {
+        ordemDesc = !ordemDesc;
+
+        toast(
+          ordemDesc
+            ? "Mais recentes primeiro"
+            : "Mais antigos primeiro"
+        );
+
+        render();
+      });
+
+      $("btnMesAnterior").addEventListener("click", function () {
+        alterarMes(-1);
+      });
+
+      $("btnProximoMes").addEventListener("click", function () {
+        alterarMes(1);
+      });
+
+      $("valorFrete").addEventListener(
+        "input",
+        calcularComissao
+      );
+
+      $("valorComissao").addEventListener(
+        "input",
+        function () {
+          $("valorComissao").dataset.manual = "true";
+        }
+      );
+
+      Array.prototype.forEach.call(
+        document.querySelectorAll(".seg"),
+        function (b) {
+          b.addEventListener("click", function () {
+            setStatus(b.dataset.status);
+          });
+        }
+      );
+
+      try {
+        db = await openDB();
+      } catch (err) {
+        $("app").classList.remove("hidden");
+        toast("Falha ao abrir o banco local.");
+        return;
+      }
+
+      $("app").classList.remove("hidden");
+      $("login").classList.add("hidden");
+      $("btnNovo").classList.add("hidden");
+      $("btnAdmin").classList.toggle("hidden", !OWNER_EMAIL);
+      $("btnSair").classList.add("hidden");
+
+      aplicarPermissoes();
+
+      firestore = firebaseInit();
+
+      if (firestore) {
+        firebase.auth().onAuthStateChanged(
+          async function (user) {
+            isAdmin = await checkIsAdmin(user);
+            userId = isAdmin && user ? user.uid : null;
+
+            if (user && !isAdmin) {
+              await firebase.auth().signOut();
+              return;
+            }
+
+            if (isAdmin) {
+              await recarregar();
+            } else {
+              cache = [];
+              render();
+            }
+
+            await syncWithFirestore();
+
+            $("login").classList.add("hidden");
+            $("btnNovo").classList.toggle(
+              "hidden",
+              !isAdmin
+            );
+
+            $("btnAdmin").classList.toggle(
+              "hidden",
+              !OWNER_EMAIL || isAdmin
+            );
+
+            $("btnSair").classList.toggle(
+              "hidden",
+              !isAdmin
+            );
+
+            aplicarPermissoes();
+          }
+        );
+
+        window.addEventListener(
+          "online",
+          syncWithFirestore
+        );
+
+        await syncWithFirestore();
+      } else {
+        await recarregar();
+        toast(
+          "Modo offline — sincronização indisponível."
+        );
+      }
     }
-  });
+  );
 })();
