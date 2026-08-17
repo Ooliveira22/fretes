@@ -317,7 +317,7 @@
     $("data").value = hoje();
     $("valorComissao").dataset.manual = "";
     $("valorRecebidoParcial").value = "";
-    $("parcialBtn").classList.add("hidden");
+    $("parcialBtn").classList.remove("hidden");
     setStatus("A Receber");
     $("btnExcluir").classList.add("hidden");
     abrirSheet();
@@ -371,8 +371,8 @@
     var valorRecebido = numero($("valorRecebidoParcial").value);
     var saldoPendente = valorComissao - valorRecebido;
     var recebeuTotal = statusAtual === "Parcial" && valorRecebido >= valorComissao;
-    if (statusAtual === "Parcial" && (!id || valorRecebido <= 0)) {
-      toast(id ? "Informe um valor maior que zero." : "O recebimento parcial só está disponível na edição.");
+    if (statusAtual === "Parcial" && valorRecebido <= 0) {
+      toast("Informe um valor maior que zero para o recebimento parcial.");
       return;
     }
     var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
