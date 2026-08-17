@@ -377,13 +377,13 @@
     }
     var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
     var registro = {
-      data: statusAtual === "Parcial" && antigo && antigo.data ? antigo.data : $("data").value,
+      data: $("data").value,
       origem: $("origem").value.trim(),
       destino: $("destino").value.trim(),
       cliente: $("cliente").value.trim(),
       valorFrete: numero($("valorFrete").value),
-      valorComissao: statusAtual === "Parcial" ? (recebeuTotal ? valorComissao : saldoPendente) : valorComissao,
-      status: statusAtual === "Parcial" ? (recebeuTotal ? "Recebido" : "A Receber") : statusAtual,
+      valorComissao: valorComissao,
+      status: statusAtual === "Parcial" ? "A Receber" : statusAtual,
       observacoes: $("observacoes").value.trim(),
       dataCriacao: agora,
       ultimaAlteracao: agora,
@@ -397,15 +397,14 @@
     var key = await put(registro);
     registro.id = key;
     await saveRemote(registro);
-    if (statusAtual === "Parcial" && !recebeuTotal) {
-      var statusRecebido = "Parcial";
+    if (statusAtual === "Parcial" && valorRecebido > 0) {
       var recebido = Object.assign({}, registro, {
         id: undefined,
         remoteId: undefined,
         data: hoje(),
         dataRecebimento: hoje(),
         valorComissao: valorRecebido,
-        status: statusRecebido,
+        status: "Parcial",
         observacoes: registro.observacoes ? registro.observacoes + " (Recebimento parcial)" : "Recebimento parcial",
         dataCriacao: agora,
         ultimaAlteracao: agora,
