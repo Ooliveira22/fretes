@@ -376,6 +376,7 @@
       return;
     }
     var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
+    var statusFinal = statusAtual === "Parcial" ? (antigo ? antigo.status : "A Receber") : statusAtual;
     var registro = {
       data: $("data").value,
       origem: $("origem").value.trim(),
@@ -383,7 +384,7 @@
       cliente: $("cliente").value.trim(),
       valorFrete: numero($("valorFrete").value),
       valorComissao: valorComissao,
-      status: statusAtual === "Parcial" ? "A Receber" : statusAtual,
+      status: statusFinal,
       observacoes: $("observacoes").value.trim(),
       dataCriacao: agora,
       ultimaAlteracao: agora,
