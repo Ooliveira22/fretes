@@ -371,19 +371,49 @@
     var valorRecebido = numero($("valorRecebidoParcial").value);
     var saldoPendente = valorComissao - valorRecebido;
     var recebeuTotal = statusAtual === "Parcial" && valorRecebido >= valorComissao;
+    
+    console.log("DEBUG salvar:", {
+      statusAtual: statusAtual,
+      valorRecebido: valorRecebido,
+      id: id,
+      isAdmin: isAdmin,
+      userId: userId
+    });
+    
     if (statusAtual === "Parcial" && valorRecebido <= 0) {
       toast("Informe um valor maior que zero para o recebimento parcial.");
       return;
     }
     var antigo = cache.filter(function (f) { return String(f.id) === String(id); })[0];
-    var statusFinal = statusAtual === "Parcial" ? (antigo ? antigo.status : "A Receber") : statusAtual;
+    
+    // Para pagamento parcial, criar novo registro com valor recebido
+    var novoRegistro = null;
+    if (statusAtual === "Parcial" && valorRecebido > 0 && id) {
+      novoRegistro = {
+        data: hoje(),
+        dataRecebimento: hoje(),
+        origem: $("origem").value.trim(),
+        destino: $("destino").value.trim(),
+        cliente: $("cliente").value.trim(),
+        valorFrete: 0,
+        valorComissao: valorRecebido,
+        status: "Parcial",
+        observacoes: $("observacoes").value.trim() ? $("observacoes").value.trim() + " (Recebimento parcial)" : "Recebimento parcial",
+        dataCriacao: agora,
+        ultimaAlteracao: agora,
+        ownerId: userId,
+      };
+    }
+    
+    // Registro principal não muda de status quando é parcial
+    var statusFinal = (id && statusAtual === "Parcial") ? (antigo ? antigo.status : "A Receber") : statusAtual;
     var registro = {
       data: $("data").value,
       origem: $("origem").value.trim(),
       destino: $("destino").value.trim(),
       cliente: $("cliente").value.trim(),
       valorFrete: numero($("valorFrete").value),
-      valorComissao: valorComissao,
+      valorComissao: numero($("valorComissao").value),
       status: statusFinal,
       observacoes: $("observacoes").value.trim(),
       dataCriacao: agora,
@@ -398,22 +428,11 @@
     var key = await put(registro);
     registro.id = key;
     await saveRemote(registro);
-    if (statusAtual === "Parcial" && valorRecebido > 0) {
-      var recebido = Object.assign({}, registro, {
-        id: undefined,
-        remoteId: undefined,
-        data: hoje(),
-        dataRecebimento: hoje(),
-        valorComissao: valorRecebido,
-        status: "Parcial",
-        observacoes: registro.observacoes ? registro.observacoes + " (Recebimento parcial)" : "Recebimento parcial",
-        dataCriacao: agora,
-        ultimaAlteracao: agora,
-      });
-      delete recebido.id;
-      delete recebido.remoteId;
-      recebido.id = await put(recebido);
-      await saveRemote(recebido);
+    
+    // Se é pagamento parcial e tem ID (frete existente), salva novo registro
+    if (novoRegistro) {
+      novoRegistro.id = await put(novoRegistro);
+      await saveRemote(novoRegistro);
     }
     fecharSheet();
     if (firestore && isOnline()) {
