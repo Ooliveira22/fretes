@@ -1,4 +1,5 @@
-// Uso: node set-admin.js <uid>
+// Uso: npm install && node set-admin.js <uid>
+// Concede a claim isAdmin — reconhecida pelo app (app.js) e pelas regras (firestore.rules).
 // Coloque sua chave da conta de serviço em `serviceAccountKey.json` (NUNCA comite este arquivo)
 
 const admin = require('firebase-admin');

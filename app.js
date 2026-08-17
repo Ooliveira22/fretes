@@ -9,16 +9,38 @@
   var firestore = null;
   var userId = null;
   var isAdmin = false;
-  var OWNER_EMAIL = "oliveira.simplicio22@gmail.com";
+  var OWNER_EMAIL = (window.localConfig && window.localConfig.OWNER_EMAIL) || null;
   var ordemDesc = true;
   var cache = [];
   var mesSelecionado = hoje().slice(0, 7);
 
   function numero(valor) {
-    if (typeof valor === "number") return valor;
+    if (typeof valor === "number") return Number.isFinite(valor) ? valor : 0;
     var texto = String(valor == null ? "" : valor).trim();
-    if (texto.indexOf("R$") !== -1) texto = texto.replace(/[^0-9,.-]/g, "").replace(/\./g, "").replace(",", ".");
-    return Number(texto) || 0;
+    if (!texto) return 0;
+
+    texto = texto.replace(/R\$\s*/gi, "").replace(/\s+/g, "");
+
+    if (texto.indexOf(",") !== -1 && texto.indexOf(".") !== -1) {
+      if (texto.lastIndexOf(",") > texto.lastIndexOf(".")) {
+        texto = texto.replace(/\./g, "").replace(",", ".");
+      } else {
+        texto = texto.replace(/,/g, "");
+      }
+    } else if (texto.indexOf(",") !== -1) {
+      var partes = texto.split(",");
+      if (partes.length > 2) {
+        texto = partes.join("");
+      } else if (partes[1] && partes[1].length <= 2) {
+        texto = partes[0] + "." + partes[1];
+      } else {
+        texto = texto.replace(",", ".");
+      }
+    }
+
+    texto = texto.replace(/[^0-9.-]/g, "");
+    var numeroParseado = Number(texto);
+    return Number.isFinite(numeroParseado) ? numeroParseado : 0;
   }
 
   /* ---------- IndexedDB ---------- */
@@ -27,11 +49,17 @@
       var req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = function (e) {
         var database = e.target.result;
+        var store;
         if (!database.objectStoreNames.contains(STORE)) {
-          var store = database.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
+          store = database.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
           store.createIndex("data", "data");
           store.createIndex("status", "status");
           store.createIndex("remoteId", "remoteId", { unique: false });
+        } else {
+          store = e.target.transaction.objectStore(STORE);
+          if (!store.indexNames.contains("remoteId")) {
+            store.createIndex("remoteId", "remoteId", { unique: false });
+          }
         }
       };
       req.onsuccess = function () { resolve(req.result); };
@@ -173,20 +201,17 @@
   }
 
   /* ---------- Render ---------- */
-  function totais(todos, mesSelecionadoItens) {
+  function totais(itensMes) {
     var pend = 0, rec = 0, qp = 0, qr = 0;
-    todos.forEach(function (f) {
+    itensMes.forEach(function (f) {
       var v = numero(f.valorComissao);
       if (f.status === "Recebido" || f.status === "Parcial") {
         rec += v;
+        qr++;
       } else {
         pend += v;
         qp++;
       }
-    });
-    mesSelecionadoItens.forEach(function (f) {
-      var v = numero(f.valorComissao);
-      if (f.status === "Recebido" || f.status === "Parcial") { rec += v; qr++; }
     });
     $("valorPendente").textContent = brl(pend);
     $("valorRecebido").textContent = brl(rec);
@@ -201,7 +226,7 @@
       return String(dataExibicao).slice(0, 7) === mesSelecionado;
     });
 
-    totais(cache, itens);
+    totais(itens);
     $("mesAtual").textContent = nomeMes(mesSelecionado);
 
     if (termo) {
@@ -299,15 +324,15 @@
   }
 
   function comissaoManual(f) {
-    var frete = Number(f.valorFrete) || 0;
-    var comissao = Number(f.valorComissao) || 0;
+    var frete = numero(f.valorFrete);
+    var comissao = numero(f.valorComissao);
     var auto = Number((frete * 0.15).toFixed(2));
     return comissao !== auto;
   }
 
   function calcularComissao() {
     if ($("valorComissao").dataset.manual === "true") return;
-    var frete = Number($("valorFrete").value) || 0;
+    var frete = numero($("valorFrete").value);
     $("valorComissao").value = (frete * 0.15).toFixed(2);
   }
 
@@ -342,8 +367,8 @@
     }
     var agora = new Date().toISOString();
     var id = $("id").value;
-    var valorComissao = Number($("valorComissao").value) || 0;
-    var valorRecebido = Number($("valorRecebidoParcial").value) || 0;
+    var valorComissao = numero($("valorComissao").value);
+    var valorRecebido = numero($("valorRecebidoParcial").value);
     var saldoPendente = valorComissao - valorRecebido;
     var recebeuTotal = statusAtual === "Parcial" && valorRecebido >= valorComissao;
     if (statusAtual === "Parcial" && (!id || valorRecebido <= 0)) {
@@ -452,7 +477,7 @@
     }
     window.addEventListener("load", function () {
       navigator.serviceWorker
-        .register("service-worker.js?v=13", { scope: "./" })
+        .register("service-worker.js?v=14", { scope: "./" })
         .then(function (registration) {
           if (registration.waiting) {
             registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -509,10 +534,31 @@
   }
 
   function mostrarLogin() {
+    if (!OWNER_EMAIL) {
+      toast("Configure o e-mail do administrador em local-config.js.");
+      return;
+    }
     $("login").classList.remove("hidden");
   }
 
+  async function checkIsAdmin(user) {
+    if (!user || !user.emailVerified) return false;
+    if (OWNER_EMAIL && String(user.email || "").toLowerCase() === String(OWNER_EMAIL).toLowerCase()) {
+      return true;
+    }
+    try {
+      var token = await user.getIdTokenResult();
+      return token.claims.isAdmin === true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   async function entrar(email, senha, criar) {
+    if (!OWNER_EMAIL) {
+      toast("Configure o e-mail do administrador em local-config.js.");
+      return;
+    }
     try {
       var auth = firebase.auth();
       var result = criar
@@ -545,6 +591,10 @@
   }
 
   async function reenviarVerificacao() {
+    if (!OWNER_EMAIL) {
+      toast("Configure o e-mail do administrador em local-config.js.");
+      return;
+    }
     var email = $("loginEmail").value.trim();
     var senha = $("loginPassword").value;
     if (!email || !senha) {
@@ -579,7 +629,9 @@
     $("btnAdmin").addEventListener("click", function () {
       mostrarLogin();
     });
-    $("btnSair").addEventListener("click", function () { firebase.auth().signOut(); });
+    $("btnSair").addEventListener("click", function () {
+      if (window.firebase && firebase.auth) firebase.auth().signOut();
+    });
     $("btnFecharLogin").addEventListener("click", function () { $("login").classList.add("hidden"); });
     $("loginForm").addEventListener("submit", function (e) {
       e.preventDefault();
@@ -616,22 +668,24 @@
 
     try {
       db = await openDB();
-      firestore = firebaseInit();
-      if (!firestore) throw new Error("Firebase indisponível");
+    } catch (err) {
       $("app").classList.remove("hidden");
-      $("login").classList.add("hidden");
-      $("btnNovo").classList.add("hidden");
-      $("btnAdmin").classList.remove("hidden");
-      $("btnSair").classList.add("hidden");
-      aplicarPermissoes();
+      toast("Falha ao abrir o banco local.");
+      return;
+    }
+
+    $("app").classList.remove("hidden");
+    $("login").classList.add("hidden");
+    $("btnNovo").classList.add("hidden");
+    $("btnAdmin").classList.toggle("hidden", !OWNER_EMAIL);
+    $("btnSair").classList.add("hidden");
+    aplicarPermissoes();
+
+    firestore = firebaseInit();
+    if (firestore) {
       firebase.auth().onAuthStateChanged(async function (user) {
-        if (user && String(user.email || "").toLowerCase() === String(OWNER_EMAIL || "").toLowerCase() && user.emailVerified) {
-          userId = user.uid;
-          isAdmin = true;
-        } else {
-          userId = null;
-          isAdmin = false;
-        }
+        isAdmin = await checkIsAdmin(user);
+        userId = isAdmin && user ? user.uid : null;
         if (user && !isAdmin) {
           await firebase.auth().signOut();
           return;
@@ -645,16 +699,15 @@
         await syncWithFirestore();
         $("login").classList.add("hidden");
         $("btnNovo").classList.toggle("hidden", !isAdmin);
-        $("btnAdmin").classList.toggle("hidden", isAdmin);
+        $("btnAdmin").classList.toggle("hidden", !OWNER_EMAIL || isAdmin);
         $("btnSair").classList.toggle("hidden", !isAdmin);
         aplicarPermissoes();
       });
       window.addEventListener("online", syncWithFirestore);
-    } catch (err) {
-      $("app").classList.remove("hidden");
-      cache = [];
-      render();
-      toast("Falha ao abrir o banco local.");
+      await syncWithFirestore();
+    } else {
+      await recarregar();
+      toast("Modo offline — sincronização indisponível.");
     }
   });
 })();

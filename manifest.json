@@ -1,7 +1,7 @@
 {
   "name": "COMISSIONADO",
   "short_name": "Comissionado",
-  "description": "Controle de Fretes e Comissões — 100% offline.",
+  "description": "Controle de Fretes e Comissões — funciona offline com cache local.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

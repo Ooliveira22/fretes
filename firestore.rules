@@ -2,17 +2,21 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Deve coincidir com OWNER_EMAIL em local-config.js (ou use set-admin.js para claim isAdmin)
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'oliveira.simplicio22@gmail.com'
-        && request.auth.token.email_verified == true;
+        && request.auth.token.email_verified == true
+        && (
+          request.auth.token.email == 'oliveira.simplicio22@gmail.com'
+          || request.auth.token.isAdmin == true
+        );
     }
 
     function validFrete() {
       return request.resource.data.keys().hasOnly([
           'data', 'origem', 'destino', 'cliente', 'valorFrete',
           'valorComissao', 'status', 'observacoes', 'dataCriacao',
-          'ultimaAlteracao', 'ownerId'
+          'ultimaAlteracao', 'ownerId', 'dataRecebimento'
         ])
         && request.resource.data.data is string
         && request.resource.data.data.size() == 10
@@ -30,8 +34,15 @@ service cloud.firestore {
         && request.resource.data.valorFrete >= 0
         && request.resource.data.valorComissao is number
         && request.resource.data.valorComissao >= 0
-        && request.resource.data.status in ['A Receber', 'Recebido']
-        && request.resource.data.ownerId == request.auth.uid;
+        && request.resource.data.status in ['A Receber', 'Recebido', 'Parcial']
+        && request.resource.data.ownerId == request.auth.uid
+        && (
+          !('dataRecebimento' in request.resource.data)
+          || (
+            request.resource.data.dataRecebimento is string
+            && request.resource.data.dataRecebimento.size() == 10
+          )
+        );
     }
 
     match /fretes/{freteId} {

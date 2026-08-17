@@ -1,37 +1,48 @@
 ﻿# COMISSIONADO PWA
 
-Site PWA para controle de fretes e comissoes.
+Site PWA para controle de fretes e comissões.
+
+## Configuração local
+
+1. Copie `local-config.example.js` para `local-config.js`.
+2. Defina seu e-mail de administrador em `window.localConfig.OWNER_EMAIL`.
+3. Não comite `local-config.js` — ele já está listado em `.gitignore`.
+
+O e-mail em `local-config.js` deve coincidir com o configurado em `firestore.rules` (ou use `set-admin.js` para conceder a claim `isAdmin`).
 
 ## Deploy no GitHub Pages
 
 1. Crie um repositório no GitHub.
-2. No seu computador, abra o terminal na pasta do projeto.
-3. Inicialize o Git e faça o primeiro commit:
-   git init
-   git add .
-   git commit -m "Inicializa repositório PWA COMISSIONADO"
-4. Adicione o remoto do GitHub (substitua <seu-usuario> e <seu-repo>):
-   git remote add origin https://github.com/<seu-usuario>/<seu-repo>.git
-5. Envie para o GitHub:
-   git push -u origin main
-6. No GitHub, vá em Settings > Pages e selecione o branch `main` e a pasta `/ (root)`.
-7. Aguarde alguns minutos e acesse a URL do GitHub Pages para testar o app online.
+2. No GitHub, vá em **Settings → Secrets → Actions** e adicione `OWNER_EMAIL` com o e-mail do administrador.
+3. Em **Settings → Pages**, selecione **GitHub Actions** como fonte de deploy.
+4. Envie para a branch `main` — o workflow `.github/workflows/deploy-pages.yml` gera `local-config.js` e publica o site.
 
-## Banco no Firebase com leitura pública e escrita privada
+## Banco no Firebase
 
-1. No Firebase Console, abra `Authentication > Sign-in method` e ative somente `E-mail/senha`.
-2. Crie o usuário administrador com o e-mail configurado no app e confirme o endereço de e-mail.
-3. Em `Firestore Database > Rules`, publique o conteúdo do arquivo `firestore.rules`.
-4. Use HTTPS em produção. O Firebase Hosting aplica os headers definidos em `firebase.json`; no GitHub Pages, mantenha o domínio HTTPS e considere o Firebase Hosting para aplicar os headers HTTP.
+1. No Firebase Console, abra **Authentication → Sign-in method** e ative somente **E-mail/senha**.
+2. Crie o usuário administrador com o e-mail configurado e confirme o endereço.
+3. Em **Firestore Database → Rules**, publique o conteúdo de `firestore.rules`:
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
 
-O arquivo `firebase.json` permite publicar as regras com o Firebase CLI usando `firebase deploy --only firestore:rules`.
+Qualquer visitante pode ler os fretes. Somente o administrador com e-mail verificado (ou claim `isAdmin`) pode criar, editar ou excluir documentos.
 
-Qualquer visitante pode ler os fretes. Somente o administrador com e-mail verificado pode criar, editar ou excluir documentos. A chave `apiKey` do Firebase presente no frontend identifica o projeto, mas não substitui as regras do Firestore e não deve ser tratada como senha.
+## Script set-admin (opcional)
 
-Segurança local
-1. Crie um arquivo `local-config.js` na raiz do projeto copiando `local-config.example.js`.
-2. No `local-config.js`, defina seu e-mail de administrador em `window.localConfig.OWNER_EMAIL`.
-3. Não comite `local-config.js` — ele já está listado em `.gitignore`.
+Para conceder acesso de administrador via custom claim em vez de e-mail fixo nas regras:
 
-Exemplo de uso: o aplicativo lerá `window.localConfig.OWNER_EMAIL` para validar o administrador sem manter o e-mail no código versionado.
+```bash
+npm install
+node set-admin.js <uid-do-usuario>
+```
 
+Requer `serviceAccountKey.json` na raiz (não comite este arquivo).
+
+## Modo offline
+
+O app armazena fretes no IndexedDB local. Se o Firebase estiver indisponível, os dados locais continuam acessíveis. A sincronização com Firestore requer conexão e login de administrador.
+
+## Fontes
+
+Roboto e Material Icons são carregados via Google Fonts (CDN). A CSP em `index.html` e `firebase.json` já permite `fonts.googleapis.com` e `fonts.gstatic.com`.

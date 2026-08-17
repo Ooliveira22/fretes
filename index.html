@@ -5,15 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com; img-src 'self' data:; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com; img-src 'self' data:; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'" />
     <title>COMISSIONADO — Controle de Fretes e Comissões</title>
     <meta name="description" content="Controle offline de fretes e comissões: cadastre, edite e acompanhe valores a receber e recebidos." />
     <meta name="theme-color" content="#1B5E20" />
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="assets/icons/icon-rs.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="assets/icons/icon-rs.svg" />
-    <link rel="stylesheet" href="assets/fonts/fonts.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
+    <script>window.localConfig = window.localConfig || {};</script>
+    <script src="local-config.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -25,7 +30,7 @@
       <img class="splash-logo" src="assets/logo/logo-rs.svg" alt="Logo COMISSIONADO" width="128" height="128" />
       <h1 class="splash-title">COMISSIONADO</h1>
       <p class="splash-sub">Controle de Fretes e Comissões</p>
-      <span class="splash-version">Versão 0.1.18</span>
+      <span class="splash-version">Versão 0.1.19</span>
     </div>
 
     <!-- LOGIN -->
@@ -106,15 +111,15 @@
         <label>Destino<input type="text" id="destino" placeholder="Cidade de destino" required /></label>
         <label>Cliente<input type="text" id="cliente" placeholder="Nome do cliente" /></label>
         <div class="row">
-          <label>Valor do Frete<input type="number" id="valorFrete" step="0.01" min="0" placeholder="0,00" /></label>
-          <label>Valor da Comissão<input type="number" id="valorComissao" step="0.01" min="0" placeholder="0,00" /></label>
+          <label>Valor do Frete<input type="number" id="valorFrete" step="0.01" min="0" inputmode="decimal" placeholder="0,00" /></label>
+          <label>Valor da Comissão<input type="number" id="valorComissao" step="0.01" min="0" inputmode="decimal" placeholder="0,00" /></label>
         </div>
         <div class="segmented" role="radiogroup" aria-label="Status">
           <button type="button" class="seg active" data-status="A Receber">A Receber</button>
           <button type="button" class="seg" data-status="Recebido">Recebido</button>
           <button type="button" class="seg hidden" id="parcialBtn" data-status="Parcial">Recebimento parcial</button>
         </div>
-        <label id="parcialGroup" class="hidden">Valor recebido<input type="number" id="valorRecebidoParcial" step="0.01" min="0" placeholder="0,00" /></label>
+        <label id="parcialGroup" class="hidden">Valor recebido<input type="number" id="valorRecebidoParcial" step="0.01" min="0" inputmode="decimal" placeholder="0,00" /></label>
         <label>Observações<textarea id="observacoes" rows="3" placeholder="Anotações..."></textarea></label>
         <div class="actions">
           <button type="submit" class="btn btn-primary admin-only"><i class="mi">save</i> Salvar</button>
@@ -125,6 +130,6 @@
     </section>
 
     <div id="toast" class="toast"></div>
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=14"></script>
   </body>
 </html>

@@ -24,6 +24,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Create local-config.js from secret
+        run: |
+          if [ -z "${{ secrets.OWNER_EMAIL }}" ]; then
+            echo "window.localConfig = { OWNER_EMAIL: null };" > local-config.js
+          else
+            printf '%s\n' "window.localConfig = { OWNER_EMAIL: \"${{ secrets.OWNER_EMAIL }}\" };" > local-config.js
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

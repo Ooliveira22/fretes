@@ -1,0 +1,11 @@
+{
+  "name": "comissionado-pwa",
+  "private": true,
+  "description": "Scripts auxiliares do COMISSIONADO PWA",
+  "scripts": {
+    "set-admin": "node set-admin.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}
